@@ -96,6 +96,22 @@ class MeetingController extends Controller
     public function show(Meeting $meeting)
     {
         $this->authorize('view', $meeting);
+
+        // Sincronizar miembros activos que no tienen registro en esta reunión
+        $existingMemberIds = $meeting->attendances()->pluck('member_id');
+        $missingMembers = Member::where('group_id', $meeting->group_id)
+            ->where('status', 'active')
+            ->whereNotIn('id', $existingMemberIds)
+            ->get();
+
+        foreach ($missingMembers as $member) {
+            Attendance::create(['meeting_id' => $meeting->id, 'member_id' => $member->id]);
+            MeetingContribution::firstOrCreate(
+                ['meeting_id' => $meeting->id, 'member_id' => $member->id],
+                ['shares' => 0, 'emergency_fund' => 0, 'fine' => 0, 'confirmed' => false]
+            );
+        }
+
         $meeting->load(['group', 'contributions.member', 'attendances.member', 'loans.member', 'bankExpenses', 'summary']);
         return view('meetings.show', compact('meeting'));
     }
