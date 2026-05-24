@@ -31,7 +31,7 @@ class MeetingContribution extends Model
 
         static::saving(function ($contribution) {
             if (($contribution->shares ?? 0) < 0 || ($contribution->shares ?? 0) > 25) {
-                throw new \InvalidArgumentException('Las acciones deben estar entre 0 y 25.');
+                throw new \InvalidArgumentException('Las acciones deben estar entre 0 y 25. (0 para miembro ausente)');
             }
             if (($contribution->emergency_fund ?? 0) < 0) {
                 throw new \InvalidArgumentException('El fondo de emergencia no puede ser negativo.');

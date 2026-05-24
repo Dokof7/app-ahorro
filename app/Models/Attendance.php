@@ -10,15 +10,16 @@ class Attendance extends Model
     use HasFactory;
 
     protected $fillable = [
-        'meeting_id', 'member_id', 'attended',
+        'meeting_id', 'member_id', 'attended', 'excused_absence',
         'paid_savings', 'paid_emergency', 'has_fine', 'observations'
     ];
 
     protected $casts = [
-        'attended'      => 'boolean',
-        'paid_savings'  => 'boolean',
-        'paid_emergency'=> 'boolean',
-        'has_fine'      => 'boolean',
+        'attended'        => 'boolean',
+        'excused_absence' => 'boolean',
+        'paid_savings'    => 'boolean',
+        'paid_emergency'  => 'boolean',
+        'has_fine'        => 'boolean',
     ];
 
     public function meeting() { return $this->belongsTo(Meeting::class); }

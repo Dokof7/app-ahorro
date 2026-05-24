@@ -17,7 +17,7 @@ class ContributionController extends Controller
         }
 
         $data = $request->validate([
-            'shares'         => 'required|integer|min:1|max:25',
+            'shares'         => 'required|integer|min:0|max:25',
             'emergency_fund' => 'nullable|numeric|min:0',
             'fine'           => 'nullable|numeric|min:0',
             'confirmed'      => 'boolean',
@@ -48,7 +48,7 @@ class ContributionController extends Controller
         $data = $request->validate([
             'contributions'                  => 'required|array',
             'contributions.*.id'             => 'required|exists:meeting_contributions,id',
-            'contributions.*.shares'         => 'required|integer|min:1|max:25',
+            'contributions.*.shares'         => 'required|integer|min:0|max:25',
             'contributions.*.emergency_fund' => 'nullable|numeric|min:0',
             'contributions.*.fine'           => 'nullable|numeric|min:0',
             'contributions.*.confirmed'      => 'boolean',

@@ -90,10 +90,10 @@
                             <td>{{ $i + 1 }}</td>
                             <td><strong>{{ $contribution->member->full_name }}</strong></td>
                             <td>
-                                <input type="number" min="1" max="20" name="contributions[{{ $i }}][shares]"
+                                <input type="number" min="0" max="25" name="contributions[{{ $i }}][shares]"
                                     value="{{ $contribution->shares ?? 1 }}"
                                     class="form-control form-control-sm contribution-input" style="width:75px"
-                                    data-row="{{ $i }}" data-field="shares" max="25">
+                                    data-row="{{ $i }}" data-field="shares">
                             </td>
                             <td><strong class="row-savings" id="savings-{{ $i }}">{{ number_format($contribution->savings, 2) }}</strong></td>
                             <td><input type="number" step="0.01" min="0" name="contributions[{{ $i }}][emergency_fund]" value="{{ $contribution->emergency_fund }}" class="form-control form-control-sm contribution-input" data-row="{{ $i }}" data-field="emergency_fund"></td>
@@ -148,13 +148,14 @@
             @csrf
             <div class="table-responsive">
                 <table class="table table-bordered table-hover">
-                    <thead class="thead-dark"><tr><th>N°</th><th>Nombre</th><th class="text-center">Asistió</th><th class="text-center">Pagó Ahorro</th><th class="text-center">Pagó Emergencia</th><th class="text-center">Tiene Multa</th><th>Observaciones</th></tr></thead>
+                    <thead class="thead-dark"><tr><th>N°</th><th>Nombre</th><th class="text-center">Asistió</th><th class="text-center">Falta c/Perm.</th><th class="text-center">Pagó Ahorro</th><th class="text-center">Pagó Emergencia</th><th class="text-center">Tiene Multa</th><th>Observaciones</th></tr></thead>
                     <tbody>
                         @foreach($meeting->attendances as $i => $att)
                         <input type="hidden" name="attendances[{{ $i }}][id]" value="{{ $att->id }}">
                         <tr>
                             <td>{{ $i + 1 }}</td><td><strong>{{ $att->member->full_name }}</strong></td>
-                            <td class="text-center"><input type="checkbox" name="attendances[{{ $i }}][attended]" value="1" {{ $att->attended ? 'checked' : '' }}></td>
+                            <td class="text-center"><input type="checkbox" name="attendances[{{ $i }}][attended]" value="1" {{ $att->attended ? 'checked' : '' }} class="att-attended" data-row="{{ $i }}"></td>
+                            <td class="text-center"><input type="checkbox" name="attendances[{{ $i }}][excused_absence]" value="1" {{ $att->excused_absence ? 'checked' : '' }} class="att-excused" data-row="{{ $i }}"></td>
                             <td class="text-center"><input type="checkbox" name="attendances[{{ $i }}][paid_savings]" value="1" {{ $att->paid_savings ? 'checked' : '' }}></td>
                             <td class="text-center"><input type="checkbox" name="attendances[{{ $i }}][paid_emergency]" value="1" {{ $att->paid_emergency ? 'checked' : '' }}></td>
                             <td class="text-center"><input type="checkbox" name="attendances[{{ $i }}][has_fine]" value="1" {{ $att->has_fine ? 'checked' : '' }}></td>
@@ -169,12 +170,20 @@
         @else
         <div class="table-responsive">
             <table class="table table-bordered">
-                <thead class="thead-dark"><tr><th>N°</th><th>Nombre</th><th class="text-center">Asistió</th><th class="text-center">Pagó Ahorro</th><th class="text-center">Pagó Emergencia</th><th class="text-center">Multa</th><th>Observaciones</th></tr></thead>
+                <thead class="thead-dark"><tr><th>N°</th><th>Nombre</th><th class="text-center">Estado</th><th class="text-center">Pagó Ahorro</th><th class="text-center">Pagó Emergencia</th><th class="text-center">Multa</th><th>Observaciones</th></tr></thead>
                 <tbody>
                     @foreach($meeting->attendances as $i => $att)
                     <tr>
                         <td>{{ $i + 1 }}</td><td>{{ $att->member->full_name }}</td>
-                        <td class="text-center">{!! $att->attended ? '<span class="text-success">✓</span>' : '<span class="text-danger">✗</span>' !!}</td>
+                        <td class="text-center">
+                            @if($att->attended)
+                                <span class="badge bg-success">Asistió</span>
+                            @elseif($att->excused_absence)
+                                <span class="badge bg-warning text-dark">Falta c/Permiso</span>
+                            @else
+                                <span class="badge bg-danger">Falta</span>
+                            @endif
+                        </td>
                         <td class="text-center">{!! $att->paid_savings ? '<span class="text-success">✓</span>' : '<span class="text-danger">✗</span>' !!}</td>
                         <td class="text-center">{!! $att->paid_emergency ? '<span class="text-success">✓</span>' : '<span class="text-danger">✗</span>' !!}</td>
                         <td class="text-center">{!! $att->has_fine ? '<span class="text-warning">⚠</span>' : '<span class="text-success">-</span>' !!}</td>
@@ -272,9 +281,11 @@
                                 <td><strong>{{ $c->member->full_name }}</strong></td>
                                 <td class="text-center">
                                     @if($att && $att->attended)
-                                        <span class="badge bg-success"><i class="fas fa-check"></i> Sí</span>
+                                        <span class="badge bg-success"><i class="fas fa-check"></i> Asistió</span>
+                                    @elseif($att && $att->excused_absence)
+                                        <span class="badge bg-warning text-dark"><i class="fas fa-user-clock"></i> c/Permiso</span>
                                     @else
-                                        <span class="badge bg-danger"><i class="fas fa-times"></i> No</span>
+                                        <span class="badge bg-danger"><i class="fas fa-times"></i> Falta</span>
                                     @endif
                                 </td>
                                 <td class="text-center">
@@ -445,6 +456,20 @@
 
 @push('js')
 <script>
+// Asistió y Falta c/Permiso son mutuamente excluyentes
+$(document).on('change', '.att-attended', function() {
+    if ($(this).is(':checked')) {
+        const row = $(this).data('row');
+        $(`.att-excused[data-row="${row}"]`).prop('checked', false);
+    }
+});
+$(document).on('change', '.att-excused', function() {
+    if ($(this).is(':checked')) {
+        const row = $(this).data('row');
+        $(`.att-attended[data-row="${row}"]`).prop('checked', false);
+    }
+});
+
 const SHARE_VALUE = {{ $meeting->group->share_value ?? 10 }};
 
 $(document).on('input', '.contribution-input', function() {
