@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Member;
 use App\Models\Group;
+use App\Models\Meeting;
+use App\Models\Attendance;
+use App\Models\MeetingContribution;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 
@@ -61,6 +64,21 @@ class MemberController extends Controller
         ]);
 
         $member = Member::create($data);
+
+        // Agregar al miembro a todas las reuniones abiertas del grupo
+        Meeting::where('group_id', $data['group_id'])
+            ->where('status', 'open')
+            ->each(function ($meeting) use ($member) {
+                Attendance::firstOrCreate([
+                    'meeting_id' => $meeting->id,
+                    'member_id'  => $member->id,
+                ]);
+                MeetingContribution::firstOrCreate(
+                    ['meeting_id' => $meeting->id, 'member_id' => $member->id],
+                    ['shares' => 0, 'emergency_fund' => 0, 'fine' => 0, 'confirmed' => false]
+                );
+            });
+
         return redirect()->route('members.show', $member)
             ->with('success', 'Miembro registrado exitosamente.');
     }
