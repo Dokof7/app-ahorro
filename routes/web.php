@@ -1,0 +1,75 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\GroupController;
+use App\Http\Controllers\MemberController;
+use App\Http\Controllers\MeetingController;
+use App\Http\Controllers\ContributionController;
+use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\LoanController;
+use App\Http\Controllers\LoanPaymentController;
+use App\Http\Controllers\FineController;
+use App\Http\Controllers\BankExpenseController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\UserController;
+
+Route::get('/', function () {
+    return redirect()->route('dashboard');
+});
+
+Auth::routes();
+
+Route::middleware('auth')->group(function () {
+
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/home', [DashboardController::class, 'index'])->name('home');
+
+    // Groups
+    Route::resource('groups', GroupController::class);
+
+    // Members
+    Route::resource('members', MemberController::class);
+    Route::get('groups/{group}/members/create', [MemberController::class, 'createForGroup'])
+        ->name('groups.members.create');
+
+    // Meetings
+    Route::resource('meetings', MeetingController::class);
+    Route::post('meetings/{meeting}/close',  [MeetingController::class, 'close'])->name('meetings.close');
+    Route::post('meetings/{meeting}/reopen', [MeetingController::class, 'reopen'])->name('meetings.reopen');
+
+    // Contributions (nested under meetings)
+    Route::put('meetings/{meeting}/contributions/{contribution}', [ContributionController::class, 'update'])
+        ->name('meetings.contributions.update');
+    Route::post('meetings/{meeting}/contributions/bulk', [ContributionController::class, 'bulkUpdate'])
+        ->name('meetings.contributions.bulk');
+
+    // Attendance (nested under meetings)
+    Route::post('meetings/{meeting}/attendance', [AttendanceController::class, 'update'])
+        ->name('meetings.attendance.update');
+
+    // Loans
+    Route::resource('loans', LoanController::class)->except(['edit', 'update']);
+    Route::get('loans/members/{groupId}',  [LoanController::class, 'getMembersByGroup'])->name('loans.members');
+    Route::get('loans/meetings/{groupId}', [LoanController::class, 'getMeetingsByGroup'])->name('loans.meetings');
+
+    // Loan Payments
+    Route::post('loan-payments',         [LoanPaymentController::class, 'store'])->name('loan-payments.store');
+    Route::delete('loan-payments/{loanPayment}', [LoanPaymentController::class, 'destroy'])->name('loan-payments.destroy');
+
+    // Fines
+    Route::resource('fines', FineController::class)->except(['edit', 'update', 'show']);
+    Route::post('fines/{fine}/mark-paid', [FineController::class, 'markPaid'])->name('fines.mark-paid');
+
+    // Bank Expenses
+    Route::resource('bank-expenses', BankExpenseController::class)->except(['show']);
+
+    // Reports
+    Route::get('reports',          [ReportController::class, 'index'])->name('reports.index');
+    Route::post('reports/generate', [ReportController::class, 'generate'])->name('reports.generate');
+
+    // Users (admin only)
+    Route::middleware('admin')->group(function () {
+        Route::resource('users', UserController::class)->except(['show']);
+    });
+});
