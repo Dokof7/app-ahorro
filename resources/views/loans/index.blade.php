@@ -1,7 +1,9 @@
 @extends('layouts.app')
 @section('page_title', 'Préstamos')
 @section('page_actions')
+    @can('canEdit')
     <a href="{{ route('loans.create') }}" class="btn btn-success"><i class="fas fa-plus mr-1"></i>Nuevo Préstamo</a>
+    @endcan
 @endsection
 @section('main_content')
 <div class="card">

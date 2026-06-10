@@ -1,7 +1,9 @@
 @extends('layouts.app')
 @section('page_title', 'Grupos de Ahorro')
 @section('page_actions')
+    @can('canEdit')
     <a href="{{ route('groups.create') }}" class="btn btn-success"><i class="fas fa-plus mr-1"></i>Nuevo Grupo</a>
+    @endcan
 @endsection
 @section('main_content')
 <div class="card">

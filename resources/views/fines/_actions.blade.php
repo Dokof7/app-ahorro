@@ -1,3 +1,4 @@
+@can('canEdit')
 @if($fine->status === 'pending')
 <form action="{{ route('fines.pay', $fine) }}" method="POST" class="d-inline">
     @csrf
@@ -8,3 +9,4 @@
     @csrf @method('DELETE')
     <button type="submit" class="btn btn-xs btn-danger btn-delete-confirm"><i class="fas fa-trash"></i></button>
 </form>
+@endcan

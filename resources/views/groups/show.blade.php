@@ -1,8 +1,10 @@
 @extends('layouts.app')
 @section('page_title', 'Grupo: ' . $group->name)
 @section('page_actions')
+    @can('canEdit')
     <a href="{{ route('groups.edit', $group) }}" class="btn btn-warning"><i class="fas fa-edit mr-1"></i>Editar</a>
     <a href="{{ route('meetings.create', ['group_id' => $group->id]) }}" class="btn btn-success ml-1"><i class="fas fa-plus mr-1"></i>Nueva Reunión</a>
+    @endcan
 @endsection
 @section('main_content')
 

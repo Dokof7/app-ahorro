@@ -1,4 +1,5 @@
 <a href="{{ route('loans.show', $loan) }}" class="btn btn-xs btn-info"><i class="fas fa-eye"></i></a>
+@can('canEdit')
 @if($loan->status !== 'paid')
 <a href="{{ route('loans.show', $loan) }}" class="btn btn-xs btn-success" title="Registrar pago"><i class="fas fa-money-bill"></i></a>
 @endif
@@ -9,3 +10,8 @@
     @csrf @method('DELETE')
     <button type="submit" class="btn btn-xs btn-danger btn-delete-confirm"><i class="fas fa-trash"></i></button>
 </form>
+@else
+@if($loan->isOverdue())
+<span class="badge bg-danger ml-1">VENCIDO</span>
+@endif
+@endcan

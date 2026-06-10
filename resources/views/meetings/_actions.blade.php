@@ -1,4 +1,5 @@
 <a href="{{ route('meetings.show', $meeting) }}" class="btn btn-xs btn-info" title="Ver detalle"><i class="fas fa-eye"></i></a>
+@can('canEdit')
 @if($meeting->isOpen())
 <a href="{{ route('meetings.edit', $meeting) }}" class="btn btn-xs btn-warning" title="Editar"><i class="fas fa-edit"></i></a>
 <form action="{{ route('meetings.close', $meeting) }}" method="POST" class="d-inline">
@@ -12,3 +13,4 @@
     @csrf @method('DELETE')
     <button type="submit" class="btn btn-xs btn-danger btn-delete-confirm"><i class="fas fa-trash"></i></button>
 </form>
+@endcan

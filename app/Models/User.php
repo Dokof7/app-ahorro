@@ -19,6 +19,24 @@ class User extends Authenticatable
         'is_active'         => 'boolean',
     ];
 
+    const ROLES = [
+        'admin'      => 'Administrador',
+        'tesorero'   => 'Tesorero',
+        'secretario' => 'Secretario',
+        'observador' => 'Observador',
+    ];
+
     public function groups() { return $this->hasMany(Group::class); }
-    public function isAdmin() { return $this->role === 'admin'; }
+
+    public function isAdmin()      { return $this->role === 'admin'; }
+    public function isTesorero()   { return $this->role === 'tesorero'; }
+    public function isSecretario() { return $this->role === 'secretario'; }
+    public function isObservador() { return $this->role === 'observador'; }
+
+    public function canEdit() { return !$this->isObservador(); }
+
+    public function getRoleLabelAttribute(): string
+    {
+        return self::ROLES[$this->role] ?? ucfirst($this->role);
+    }
 }

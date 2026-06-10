@@ -1,7 +1,9 @@
 @extends('layouts.app')
 @section('page_title', 'Miembros')
 @section('page_actions')
+    @can('canEdit')
     <a href="{{ route('members.create') }}" class="btn btn-success"><i class="fas fa-user-plus mr-1"></i>Nuevo Miembro</a>
+    @endcan
 @endsection
 @section('main_content')
 <div class="card">

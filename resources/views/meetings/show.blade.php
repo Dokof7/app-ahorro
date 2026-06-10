@@ -8,6 +8,7 @@
 @endsection
 
 @section('page_actions')
+    @can('canEdit')
     @if($meeting->isOpen())
         <form action="{{ route('meetings.close', $meeting) }}" method="POST" class="d-inline">
             @csrf
@@ -25,6 +26,7 @@
         </form>
         @endcan
     @endif
+    @endcan
     <a href="{{ route('reports.index') }}" class="btn btn-info ml-1"><i class="fas fa-file-pdf mr-1"></i>Imprimir</a>
 @endsection
 
@@ -75,7 +77,7 @@
 
     <div class="tab-pane fade" id="contributions">
         <h5 class="mb-3">Control de Aportes por Miembro</h5>
-        @if($meeting->isOpen())
+        @if($meeting->isOpen() && auth()->user()->canEdit())
         <form action="{{ route('meetings.contributions.bulk', $meeting) }}" method="POST" id="contributionsForm">
             @csrf
             <div class="table-responsive">
@@ -143,7 +145,7 @@
 
     <div class="tab-pane fade show active" id="attendance">
         <h5 class="mb-1">Registro de Asistencia</h5>
-        @if($meeting->isOpen())
+        @if($meeting->isOpen() && auth()->user()->canEdit())
         <form action="{{ route('meetings.attendance.update', $meeting) }}" method="POST">
             @csrf
             <div class="table-responsive">
@@ -377,7 +379,7 @@
             <div class="card-header">
                 <h3 class="card-title"><i class="fas fa-university mr-2"></i>Gastos Bancarios</h3>
                 <div class="card-tools">
-                    @if($meeting->isOpen())
+                    @if($meeting->isOpen() && auth()->user()->canEdit())
                     <a href="{{ route('bank-expenses.create') }}?meeting_id={{ $meeting->id }}" class="btn btn-sm btn-outline-secondary">
                         <i class="fas fa-plus mr-1"></i>Agregar
                     </a>
@@ -417,7 +419,7 @@
     <div class="tab-pane fade" id="loans">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="mb-0">Préstamos aprobados en esta Reunión</h5>
-            @if($meeting->isOpen())
+            @if($meeting->isOpen() && auth()->user()->canEdit())
             <a href="{{ route('loans.create') }}?meeting_id={{ $meeting->id }}" class="btn btn-sm btn-success"><i class="fas fa-plus mr-1"></i>Nuevo Préstamo</a>
             @endif
         </div>

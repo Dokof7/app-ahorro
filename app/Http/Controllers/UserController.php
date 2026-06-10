@@ -13,9 +13,16 @@ class UserController extends Controller
     {
         if ($request->ajax()) {
             return DataTables::of(User::query())
-                ->addColumn('role_badge', fn($u) => $u->isAdmin()
-                    ? '<span class="badge bg-danger">Admin</span>'
-                    : '<span class="badge bg-primary">Usuario</span>')
+                ->addColumn('role_badge', function ($u) {
+                    $colors = [
+                        'admin'      => 'danger',
+                        'tesorero'   => 'warning',
+                        'secretario' => 'info',
+                        'observador' => 'secondary',
+                    ];
+                    $color = $colors[$u->role] ?? 'primary';
+                    return '<span class="badge bg-' . $color . '">' . $u->role_label . '</span>';
+                })
                 ->addColumn('status_badge', fn($u) => $u->is_active
                     ? '<span class="badge bg-success">Activo</span>'
                     : '<span class="badge bg-secondary">Inactivo</span>')
@@ -35,7 +42,7 @@ class UserController extends Controller
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|unique:users',
             'password' => 'required|min:8|confirmed',
-            'role'     => 'required|in:admin,user',
+            'role'     => 'required|in:admin,tesorero,secretario,observador',
             'phone'    => 'nullable|string',
         ]);
         $data['password'] = Hash::make($data['password']);
@@ -50,7 +57,7 @@ class UserController extends Controller
         $data = $request->validate([
             'name'      => 'required|string|max:255',
             'email'     => 'required|email|unique:users,email,' . $user->id,
-            'role'      => 'required|in:admin,user',
+            'role'      => 'required|in:admin,tesorero,secretario,observador',
             'is_active' => 'boolean',
             'phone'     => 'nullable|string',
         ]);

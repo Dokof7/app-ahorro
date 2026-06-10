@@ -1,7 +1,9 @@
 @extends('layouts.app')
 @section('page_title', $member->full_name)
 @section('page_actions')
+    @can('canEdit')
     <a href="{{ route('members.edit', $member) }}" class="btn btn-warning"><i class="fas fa-edit mr-1"></i>Editar</a>
+    @endcan
 @endsection
 @section('main_content')
 
