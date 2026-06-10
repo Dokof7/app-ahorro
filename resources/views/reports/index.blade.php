@@ -89,7 +89,15 @@ $('#report_type').on('change', function() {
     const type = $(this).val();
     $('.filter-member').toggle(type === 'member');
     $('.filter-month').toggle(['meeting', 'monthly'].includes(type));
-    $('.filter-date').toggle(type === 'meeting');
+
+    const showDates = type === 'meeting';
+    $('.filter-date').toggle(showDates);
+    if (!showDates) {
+        $('.filter-date input[type="date"]').val('');
+    }
+    if (!['meeting', 'monthly'].includes(type)) {
+        $('[name="month"]').val('');
+    }
 }).trigger('change');
 </script>
 @endpush

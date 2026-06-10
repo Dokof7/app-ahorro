@@ -73,11 +73,12 @@ class ReportController extends Controller
     private function meetingReport(array $filters, $groupIds): array
     {
         $query = Meeting::whereIn('group_id', $groupIds)
-            ->with(['group', 'contributions.member', 'summary']);
-        if ($filters['group_id']) $query->where('group_id', $filters['group_id']);
-        if ($filters['month'])    $query->where('month', $filters['month']);
-        if ($filters['date_from'])$query->where('meeting_date', '>=', $filters['date_from']);
-        if ($filters['date_to'])  $query->where('meeting_date', '<=', $filters['date_to']);
+            ->with(['group', 'contributions'])
+            ->orderBy('meeting_date', 'desc');
+        if (!empty($filters['group_id'])) $query->where('group_id', $filters['group_id']);
+        if (!empty($filters['month']))    $query->where('month', $filters['month']);
+        if (!empty($filters['date_from']))$query->where('meeting_date', '>=', $filters['date_from']);
+        if (!empty($filters['date_to']))  $query->where('meeting_date', '<=', $filters['date_to']);
         return ['meetings' => $query->get(), 'filters' => $filters];
     }
 
