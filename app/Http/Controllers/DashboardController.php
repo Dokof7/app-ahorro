@@ -20,15 +20,19 @@ class DashboardController extends Controller
         $groupIds = $groups->pluck('id');
 
         $stats = [
-            'total_groups'    => $groups->count(),
-            'total_members'   => Member::whereIn('group_id', $groupIds)->count(),
-            'total_meetings'  => Meeting::whereIn('group_id', $groupIds)->count(),
-            'total_savings'   => MeetingContribution::whereHas('meeting', fn($q) => $q->whereIn('group_id', $groupIds))->sum('savings'),
-            'total_emergency' => MeetingContribution::whereHas('meeting', fn($q) => $q->whereIn('group_id', $groupIds))->sum('emergency_fund'),
-            'total_fines'     => MeetingContribution::whereHas('meeting', fn($q) => $q->whereIn('group_id', $groupIds))->sum('fine'),
-            'loans_pending'   => Loan::whereIn('group_id', $groupIds)->where('status', 'pending')->sum('balance'),
-            'loans_paid'      => Loan::whereIn('group_id', $groupIds)->where('status', 'paid')->sum('total_to_return'),
-            'loans_overdue'   => Loan::whereIn('group_id', $groupIds)->where('status', 'overdue')->count(),
+            'total_groups'       => $groups->count(),
+            'total_members'      => Member::whereIn('group_id', $groupIds)->count(),
+            'total_meetings'     => Meeting::whereIn('group_id', $groupIds)->count(),
+            'total_savings'      => MeetingContribution::whereHas('meeting', fn($q) => $q->whereIn('group_id', $groupIds))->sum('savings'),
+            'total_emergency'    => MeetingContribution::whereHas('meeting', fn($q) => $q->whereIn('group_id', $groupIds))->sum('emergency_fund'),
+            'total_fines'        => MeetingContribution::whereHas('meeting', fn($q) => $q->whereIn('group_id', $groupIds))->sum('fine'),
+            'loans_pending'      => Loan::whereIn('group_id', $groupIds)->where('status', 'pending')->sum('balance'),
+            'loans_paid'         => Loan::whereIn('group_id', $groupIds)->where('status', 'paid')->sum('total_to_return'),
+            'loans_overdue'      => Loan::whereIn('group_id', $groupIds)->where('status', 'overdue')->count(),
+            'total_membership'   => Member::whereIn('group_id', $groupIds)
+                                        ->where('membership_paid', true)
+                                        ->join('groups', 'members.group_id', '=', 'groups.id')
+                                        ->sum('groups.membership_fee'),
         ];
 
         $chartData = $this->getChartData($groupIds);

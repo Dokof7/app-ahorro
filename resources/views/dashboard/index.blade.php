@@ -94,6 +94,15 @@
             </div>
         </div>
     </div>
+    <div class="col-md-2 col-sm-4 col-6">
+        <div class="info-box">
+            <span class="info-box-icon bg-purple elevation-1" style="background-color:#6f42c1!important"><i class="fas fa-id-card"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">Membresías Cobradas</span>
+                <span class="info-box-number">Bs. {{ number_format($stats['total_membership'], 2) }}</span>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="row">

@@ -26,23 +26,33 @@
                 <th>Inicio</th>
                 <th>Miembros</th>
                 <th>Reuniones</th>
+                <th style="text-align:right">Cuota Membresía</th>
+                <th style="text-align:center">Membresías Pagadas</th>
+                <th style="text-align:right">Total Membresías</th>
                 <th>Estado</th>
             </tr>
         </thead>
         <tbody>
             @forelse($groups as $group)
+            @php
+                $paidCount = $group->members->where('membership_paid', true)->count();
+                $totalMembership = $paidCount * $group->membership_fee;
+            @endphp
             <tr>
                 <td>{{ $group->name }}</td>
                 <td>{{ $group->description ?? '-' }}</td>
                 <td>{{ $group->start_date }}</td>
-                <td>{{ $group->members->count() }}</td>
-                <td>{{ $group->meetings->count() }}</td>
+                <td style="text-align:center">{{ $group->members->count() }}</td>
+                <td style="text-align:center">{{ $group->meetings->count() }}</td>
+                <td style="text-align:right">{{ $group->membership_fee > 0 ? 'Bs. ' . number_format($group->membership_fee, 2) : '-' }}</td>
+                <td style="text-align:center">{{ $group->membership_fee > 0 ? $paidCount . ' / ' . $group->members->count() : '-' }}</td>
+                <td style="text-align:right">{{ $group->membership_fee > 0 ? 'Bs. ' . number_format($totalMembership, 2) : '-' }}</td>
                 <td class="{{ $group->status === 'active' ? 'badge-active' : 'badge-inactive' }}">
                     {{ $group->status === 'active' ? 'Activo' : 'Inactivo' }}
                 </td>
             </tr>
             @empty
-            <tr><td colspan="6" style="text-align:center;">Sin registros</td></tr>
+            <tr><td colspan="9" style="text-align:center;">Sin registros</td></tr>
             @endforelse
         </tbody>
     </table>

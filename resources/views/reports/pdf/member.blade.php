@@ -22,13 +22,13 @@
             <tr>
                 <th>Nombre</th>
                 <th>Documento</th>
-                <th>Teléfono</th>
                 <th>Grupo</th>
                 <th>Ingreso</th>
                 <th class="text-right">Ahorros (Bs.)</th>
                 <th class="text-right">Emergencia (Bs.)</th>
                 <th class="text-right">Multas (Bs.)</th>
                 <th>Préstamos</th>
+                <th style="text-align:center">Membresía</th>
                 <th>Estado</th>
             </tr>
         </thead>
@@ -37,13 +37,19 @@
             <tr>
                 <td>{{ $member->full_name }}</td>
                 <td>{{ $member->document_number ?? '-' }}</td>
-                <td>{{ $member->phone ?? '-' }}</td>
                 <td>{{ $member->group->name ?? '-' }}</td>
                 <td>{{ $member->join_date }}</td>
                 <td class="text-right">{{ number_format($member->contributions->sum('savings'), 2) }}</td>
                 <td class="text-right">{{ number_format($member->contributions->sum('emergency_fund'), 2) }}</td>
                 <td class="text-right">{{ number_format($member->fines->sum('amount'), 2) }}</td>
-                <td>{{ $member->loans->count() }}</td>
+                <td style="text-align:center">{{ $member->loans->count() }}</td>
+                <td style="text-align:center">
+                    @if(($member->group->membership_fee ?? 0) > 0)
+                        {{ $member->membership_paid ? 'Pagada' : 'Pendiente' }}
+                    @else
+                        -
+                    @endif
+                </td>
                 <td>{{ $member->status === 'active' ? 'Activo' : 'Inactivo' }}</td>
             </tr>
             @empty

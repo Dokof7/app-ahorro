@@ -91,7 +91,7 @@ class ReportController extends Controller
 
     private function memberReport(array $filters, $groupIds): array
     {
-        $query = Member::whereIn('group_id', $groupIds)->with(['contributions', 'loans', 'fines']);
+        $query = Member::whereIn('group_id', $groupIds)->with(['group', 'contributions', 'loans', 'fines']);
         if ($filters['group_id']) $query->whereIn('group_id', [$filters['group_id']]);
         if ($filters['member_id'])$query->where('id', $filters['member_id']);
         return ['members' => $query->get(), 'filters' => $filters];
