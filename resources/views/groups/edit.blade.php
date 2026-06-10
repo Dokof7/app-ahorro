@@ -66,6 +66,16 @@
                                     value="{{ old('default_emergency', $group->default_emergency) }}">
                             </div>
                         </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Cuota de Membresía (Bs.)</label>
+                                <input type="number" step="0.01" min="0" name="membership_fee"
+                                    class="form-control @error('membership_fee') is-invalid @enderror"
+                                    value="{{ old('membership_fee', $group->membership_fee) }}">
+                                <small class="text-muted">Pago único por miembro durante el ciclo.</small>
+                                @error('membership_fee')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="card-footer">

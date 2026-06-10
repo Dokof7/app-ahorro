@@ -12,7 +12,8 @@ class Group extends Model
 
     protected $fillable = [
         'user_id', 'name', 'description', 'start_date',
-        'status', 'share_value', 'default_shares', 'default_savings', 'default_emergency'
+        'status', 'share_value', 'default_shares', 'default_savings', 'default_emergency',
+        'membership_fee',
     ];
 
     protected $casts = ['start_date' => 'date'];

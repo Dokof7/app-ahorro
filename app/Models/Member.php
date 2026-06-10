@@ -12,10 +12,15 @@ class Member extends Model
 
     protected $fillable = [
         'group_id', 'full_name', 'document_number',
-        'phone', 'address', 'join_date', 'status'
+        'phone', 'address', 'join_date', 'status',
+        'membership_paid', 'membership_paid_at',
     ];
 
-    protected $casts = ['join_date' => 'date'];
+    protected $casts = [
+        'join_date'          => 'date',
+        'membership_paid'    => 'boolean',
+        'membership_paid_at' => 'datetime',
+    ];
 
     public function group() { return $this->belongsTo(Group::class); }
     public function contributions() { return $this->hasMany(MeetingContribution::class); }

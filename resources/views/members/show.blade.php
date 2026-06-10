@@ -63,6 +63,32 @@
                 </p>
             </div>
         </div>
+
+        @if($member->group->membership_fee > 0)
+        <hr>
+        <div class="d-flex align-items-center justify-content-between flex-wrap">
+            <div>
+                <strong>Membresía del Ciclo:</strong>
+                @if($member->membership_paid)
+                    <span class="badge bg-success ml-1"><i class="fas fa-check mr-1"></i>Pagada</span>
+                    <small class="text-muted ml-2">el {{ $member->membership_paid_at->format('d/m/Y') }}</small>
+                @else
+                    <span class="badge bg-warning text-dark ml-1"><i class="fas fa-clock mr-1"></i>Pendiente</span>
+                    <small class="text-muted ml-2">Bs. {{ number_format($member->group->membership_fee, 2) }}</small>
+                @endif
+            </div>
+            @if(!$member->membership_paid)
+            @can('canEdit')
+            <form action="{{ route('members.membership-paid', $member) }}" method="POST" class="d-inline mt-2 mt-md-0">
+                @csrf
+                <button type="submit" class="btn btn-sm btn-success">
+                    <i class="fas fa-dollar-sign mr-1"></i>Registrar Pago de Membresía
+                </button>
+            </form>
+            @endcan
+            @endif
+        </div>
+        @endif
     </div>
 </div>
 

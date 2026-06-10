@@ -124,6 +124,22 @@ class MemberController extends Controller
         }
     }
 
+    public function markMembershipPaid(Member $member)
+    {
+        $this->authorize('update', $member);
+
+        if ($member->membership_paid) {
+            return back()->with('error', 'Este miembro ya tiene su membresía registrada como pagada.');
+        }
+
+        $member->update([
+            'membership_paid'    => true,
+            'membership_paid_at' => now(),
+        ]);
+
+        return back()->with('success', 'Membresía de ' . $member->full_name . ' marcada como pagada.');
+    }
+
     public function destroy(Member $member)
     {
         $this->authorize('delete', $member);

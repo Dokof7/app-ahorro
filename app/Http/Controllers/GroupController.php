@@ -40,9 +40,11 @@ class GroupController extends Controller
             'share_value'       => 'required|numeric|min:0.01',
             'default_shares'    => 'nullable|integer|min:1|max:25',
             'default_emergency' => 'nullable|numeric|min:0',
+            'membership_fee'    => 'nullable|numeric|min:0',
         ]);
 
         $data['default_shares'] = $data['default_shares'] ?? null;
+        $data['membership_fee'] = $data['membership_fee'] ?? 0;
         $data['user_id'] = auth()->id();
         $group = Group::create($data);
 
@@ -55,10 +57,11 @@ class GroupController extends Controller
         $this->authorize('view', $group);
         $group->load(['members', 'meetings.summary']);
         $stats = [
-            'total_members'  => $group->members()->count(),
-            'total_meetings' => $group->meetings()->count(),
-            'total_savings'  => $group->meetings()->with('contributions')->get()->sum('total_savings'),
-            'pending_loans'  => $group->loans()->where('status', 'pending')->count(),
+            'total_members'      => $group->members()->count(),
+            'total_meetings'     => $group->meetings()->count(),
+            'total_savings'      => $group->meetings()->with('contributions')->get()->sum('total_savings'),
+            'pending_loans'      => $group->loans()->where('status', 'pending')->count(),
+            'membership_paid'    => $group->members()->where('membership_paid', true)->count(),
         ];
         return view('groups.show', compact('group', 'stats'));
     }
@@ -80,8 +83,10 @@ class GroupController extends Controller
             'share_value'       => 'required|numeric|min:0.01',
             'default_shares'    => 'nullable|integer|min:1|max:25',
             'default_emergency' => 'nullable|numeric|min:0',
+            'membership_fee'    => 'nullable|numeric|min:0',
         ]);
         $data['default_shares'] = $data['default_shares'] ?? null;
+        $data['membership_fee'] = $data['membership_fee'] ?? 0;
         $group->update($data);
         return redirect()->route('groups.show', $group)->with('success', 'Grupo actualizado.');
     }
