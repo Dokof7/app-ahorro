@@ -29,15 +29,20 @@ Route::middleware('auth')->group(function () {
     Route::resource('groups',  GroupController::class)->only(['index', 'show']);
     Route::resource('members', MemberController::class)->only(['index', 'show']);
     Route::resource('meetings', MeetingController::class)->only(['index', 'show']);
-    Route::resource('loans', LoanController::class)->only(['index', 'show']);
+    Route::resource('loans', LoanController::class)->only(['index', 'show'])
+        ->where(['loan' => '[0-9]+']);
     Route::get('loans/members/{groupId}',  [LoanController::class, 'getMembersByGroup'])->name('loans.members');
     Route::get('loans/meetings/{groupId}', [LoanController::class, 'getMeetingsByGroup'])->name('loans.meetings');
+    Route::get('fines/members/{groupId}',  [FineController::class, 'getMembersByGroup'])->name('fines.members');
+    Route::get('fines/meetings/{groupId}', [FineController::class, 'getMeetingsByGroup'])->name('fines.meetings');
+    Route::get('bank-expenses/meetings/{groupId}', [BankExpenseController::class, 'getMeetingsByGroup'])->name('bank-expenses.meetings');
     Route::resource('fines', FineController::class)->only(['index']);
     Route::resource('bank-expenses', BankExpenseController::class)->only(['index']);
 
     // Reports – all roles (observador can generate/print)
-    Route::get('reports',           [ReportController::class, 'index'])->name('reports.index');
-    Route::post('reports/generate', [ReportController::class, 'generate'])->name('reports.generate');
+    Route::get('reports',                          [ReportController::class, 'index'])->name('reports.index');
+    Route::post('reports/generate',               [ReportController::class, 'generate'])->name('reports.generate');
+    Route::get('reports/members/{group}',         [ReportController::class, 'membersByGroup'])->name('reports.members');
 
     // WRITE routes – admin, tesorero, secretario (not observador)
     Route::middleware('role:admin,tesorero,secretario')->group(function () {

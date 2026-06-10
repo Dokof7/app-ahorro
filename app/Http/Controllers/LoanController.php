@@ -64,7 +64,7 @@ class LoanController extends Controller
     public function show(Loan $loan)
     {
         $this->authorize('view', $loan);
-        $loan->load(['member', 'group', 'meeting', 'payments']);
+        $loan->load(['member', 'group.meetings', 'meeting', 'payments']);
         return view('loans.show', compact('loan'));
     }
 

@@ -26,7 +26,8 @@ class User extends Authenticatable
         'observador' => 'Observador',
     ];
 
-    public function groups() { return $this->hasMany(Group::class); }
+    public function ownedGroups() { return $this->hasMany(Group::class); }
+    public function groups() { return $this->belongsToMany(Group::class); }
 
     public function isAdmin()      { return $this->role === 'admin'; }
     public function isTesorero()   { return $this->role === 'tesorero'; }

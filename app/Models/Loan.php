@@ -26,7 +26,7 @@ class Loan extends Model
 
     public function isOverdue()
     {
-        return $this->status === 'pending' && $this->due_date->isPast();
+        return $this->status === 'overdue';
     }
 
     protected static function booted()

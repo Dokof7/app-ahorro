@@ -30,7 +30,6 @@ class LoanPaymentController extends Controller
     public function destroy(LoanPayment $loanPayment)
     {
         $loanPayment->delete();
-        $loanPayment->loan->recalculateBalance();
         return back()->with('success', 'Pago eliminado.');
     }
 }

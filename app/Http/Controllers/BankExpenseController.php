@@ -73,4 +73,9 @@ class BankExpenseController extends Controller
         $bankExpense->delete();
         return redirect()->route('bank-expenses.index')->with('success', 'Gasto eliminado.');
     }
+
+    public function getMeetingsByGroup($groupId)
+    {
+        return Meeting::where('group_id', $groupId)->where('status', 'open')->get();
+    }
 }

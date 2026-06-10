@@ -74,7 +74,7 @@
 $('#groupSelect').on('change', function() {
     const groupId = $(this).val();
     if (!groupId) return;
-    $.get('/api/groups/' + groupId + '/meetings', function(data) {
+    $.get('/bank-expenses/meetings/' + groupId, function(data) {
         let opts = '<option value="">Seleccionar reunión...</option>';
         data.forEach(m => opts += `<option value="${m.id}">N° ${m.meeting_number} - ${m.meeting_date}</option>`);
         $('#meetingSelect').html(opts);

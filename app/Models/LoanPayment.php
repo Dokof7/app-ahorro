@@ -35,7 +35,10 @@ class LoanPayment extends Model
         $loan = $payment->loan;
         if (!$loan) return;
 
-        $loan->amount_paid = round($loan->payments()->sum('amount_paid'), 2);
+        $loan->amount_paid = round(
+            $loan->payments()->sum('amount_paid') + $loan->payments()->sum('interest_paid'),
+            2
+        );
         $loan->balance     = round($loan->total_to_return - $loan->amount_paid, 2);
 
         if ($loan->balance <= 0) {

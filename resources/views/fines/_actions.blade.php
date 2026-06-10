@@ -1,6 +1,6 @@
 @can('canEdit')
 @if($fine->status === 'pending')
-<form action="{{ route('fines.pay', $fine) }}" method="POST" class="d-inline">
+<form action="{{ route('fines.mark-paid', $fine) }}" method="POST" class="d-inline">
     @csrf
     <button type="submit" class="btn btn-xs btn-success" title="Marcar pagada"><i class="fas fa-check"></i></button>
 </form>

@@ -16,7 +16,8 @@ class ReportController extends Controller
 {
     public function index()
     {
-        $groups = auth()->user()->isAdmin() ? Group::all() : auth()->user()->groups;
+        $user = auth()->user();
+        $groups = $user->isAdmin() ? Group::all() : $user->groups()->get();
         return view('reports.index', compact('groups'));
     }
 
@@ -41,16 +42,28 @@ class ReportController extends Controller
         }
 
         return Excel::download(
-            new GroupReportExport($reportData),
+            new GroupReportExport($reportData, $data['report_type']),
             'reporte_' . $data['report_type'] . '_' . now()->format('Ymd') . '.xlsx'
+        );
+    }
+
+    public function membersByGroup(Group $group)
+    {
+        $user = auth()->user();
+        if (!$user->isAdmin() && !$user->groups()->where('groups.id', $group->id)->exists()) {
+            abort(403);
+        }
+        return response()->json(
+            $group->members()->where('status', 'active')->orderBy('full_name')->get(['id', 'full_name'])
         );
     }
 
     private function getReportData(array $filters): array
     {
-        $groupIds = auth()->user()->isAdmin()
+        $user = auth()->user();
+        $groupIds = $user->isAdmin()
             ? Group::pluck('id')
-            : auth()->user()->groups()->pluck('id');
+            : $user->groups()->pluck('groups.id');
 
         return match($filters['report_type']) {
             'group'        => $this->groupReport($filters, $groupIds),
@@ -66,7 +79,7 @@ class ReportController extends Controller
     private function groupReport(array $filters, $groupIds): array
     {
         $query = Group::whereIn('id', $groupIds)->with(['members', 'meetings']);
-        if ($filters['group_id']) $query->where('id', $filters['group_id']);
+        if (!empty($filters['group_id'])) $query->where('id', $filters['group_id']);
         return ['groups' => $query->get(), 'filters' => $filters];
     }
 
@@ -86,15 +99,15 @@ class ReportController extends Controller
     {
         $query = Loan::whereIn('group_id', $groupIds)->where('status', $status)
             ->with(['member', 'group', 'meeting', 'payments']);
-        if ($filters['group_id']) $query->where('group_id', $filters['group_id']);
+        if (!empty($filters['group_id'])) $query->where('group_id', $filters['group_id']);
         return ['loans' => $query->get(), 'filters' => $filters, 'status' => $status];
     }
 
     private function memberReport(array $filters, $groupIds): array
     {
         $query = Member::whereIn('group_id', $groupIds)->with(['group', 'contributions', 'loans', 'fines']);
-        if ($filters['group_id']) $query->whereIn('group_id', [$filters['group_id']]);
-        if ($filters['member_id'])$query->where('id', $filters['member_id']);
+        if (!empty($filters['group_id'])) $query->whereIn('group_id', [$filters['group_id']]);
+        if (!empty($filters['member_id'])) $query->where('id', $filters['member_id']);
         return ['members' => $query->get(), 'filters' => $filters];
     }
 

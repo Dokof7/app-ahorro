@@ -73,12 +73,12 @@
 $('#groupSelect').on('change', function() {
     const groupId = $(this).val();
     if (!groupId) return;
-    $.get('/api/groups/' + groupId + '/members', function(data) {
+    $.get('/fines/members/' + groupId, function(data) {
         let opts = '<option value="">Seleccionar miembro...</option>';
         data.forEach(m => opts += `<option value="${m.id}">${m.full_name}</option>`);
         $('#memberSelect').html(opts);
     });
-    $.get('/api/groups/' + groupId + '/meetings', function(data) {
+    $.get('/fines/meetings/' + groupId, function(data) {
         let opts = '<option value="">Seleccionar reunión...</option>';
         data.forEach(m => opts += `<option value="${m.id}">N° ${m.meeting_number} - ${m.meeting_date}</option>`);
         $('#meetingSelect').html(opts);

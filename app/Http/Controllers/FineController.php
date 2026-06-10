@@ -67,4 +67,14 @@ class FineController extends Controller
         $fine->delete();
         return redirect()->route('fines.index')->with('success', 'Multa eliminada.');
     }
+
+    public function getMembersByGroup($groupId)
+    {
+        return Member::where('group_id', $groupId)->where('status', 'active')->get();
+    }
+
+    public function getMeetingsByGroup($groupId)
+    {
+        return Meeting::where('group_id', $groupId)->where('status', 'open')->get();
+    }
 }

@@ -47,7 +47,7 @@
                 <div class="col-md-6 filter-member">
                     <div class="form-group">
                         <label>Miembro</label>
-                        <select name="member_id" class="form-control select2">
+                        <select name="member_id" id="member_id" class="form-control select2">
                             <option value="">-- Todos --</option>
                         </select>
                     </div>
@@ -85,6 +85,20 @@
 @endsection
 @push('js')
 <script>
+function loadMembers(groupId) {
+    const $select = $('#member_id');
+    $select.empty().append('<option value="">-- Todos --</option>');
+    if (!groupId) return;
+    $.getJSON('{{ route("reports.members", ":groupId") }}'.replace(':groupId', groupId), function(members) {
+        members.forEach(function(m) {
+            $select.append('<option value="' + m.id + '">' + m.full_name + '</option>');
+        });
+        if ($select.hasClass('select2-hidden-accessible')) {
+            $select.trigger('change');
+        }
+    });
+}
+
 $('#report_type').on('change', function() {
     const type = $(this).val();
     $('.filter-member').toggle(type === 'member');
@@ -98,6 +112,15 @@ $('#report_type').on('change', function() {
     if (!['meeting', 'monthly'].includes(type)) {
         $('[name="month"]').val('');
     }
+    if (type === 'member') {
+        loadMembers($('[name="group_id"]').val());
+    }
 }).trigger('change');
+
+$('[name="group_id"]').on('change', function() {
+    if ($('#report_type').val() === 'member') {
+        loadMembers($(this).val());
+    }
+});
 </script>
 @endpush
