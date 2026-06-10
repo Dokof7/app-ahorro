@@ -11,7 +11,7 @@ class Member extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'group_id', 'full_name', 'document_number',
+        'group_id', 'user_id', 'full_name', 'document_number',
         'phone', 'address', 'join_date', 'status',
         'membership_paid', 'membership_paid_at',
     ];
@@ -23,6 +23,7 @@ class Member extends Model
     ];
 
     public function group() { return $this->belongsTo(Group::class); }
+    public function user()  { return $this->belongsTo(User::class); }
     public function contributions() { return $this->hasMany(MeetingContribution::class); }
     public function attendances() { return $this->hasMany(Attendance::class); }
     public function loans() { return $this->hasMany(Loan::class); }

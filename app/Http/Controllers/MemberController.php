@@ -17,7 +17,7 @@ class MemberController extends Controller
         if ($request->ajax()) {
             $groupIds = auth()->user()->isAdmin()
                 ? Group::pluck('id')
-                : auth()->user()->groups()->pluck('id');
+                : auth()->user()->groups()->pluck('groups.id');
 
             $query = Member::with('group')->whereIn('group_id', $groupIds);
             if ($request->group_id) $query->where('group_id', $request->group_id);
@@ -33,7 +33,7 @@ class MemberController extends Controller
                 ->make(true);
         }
 
-        $groups = auth()->user()->isAdmin() ? Group::all() : auth()->user()->groups;
+        $groups = auth()->user()->isAdmin() ? Group::all() : auth()->user()->groups()->get();
         return view('members.index', compact('groups'));
     }
 
@@ -101,7 +101,7 @@ class MemberController extends Controller
     public function edit(Member $member)
     {
         $this->authorize('update', $member);
-        $groups = auth()->user()->isAdmin() ? Group::all() : auth()->user()->groups;
+        $groups = auth()->user()->isAdmin() ? Group::all() : auth()->user()->groups()->get();
         return view('members.edit', compact('member', 'groups'));
     }
 

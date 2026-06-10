@@ -16,7 +16,7 @@ class FineController extends Controller
         if ($request->ajax()) {
             $groupIds = auth()->user()->isAdmin()
                 ? Group::pluck('id')
-                : auth()->user()->groups()->pluck('id');
+                : auth()->user()->groups()->pluck('groups.id');
 
             $query = Fine::with(['member.group', 'meeting'])
                 ->whereHas('member', fn($q) => $q->whereIn('group_id', $groupIds));
@@ -32,13 +32,13 @@ class FineController extends Controller
                 ->make(true);
         }
 
-        $groups = auth()->user()->isAdmin() ? Group::all() : auth()->user()->groups;
+        $groups = auth()->user()->isAdmin() ? Group::all() : auth()->user()->groups()->get();
         return view('fines.index', compact('groups'));
     }
 
     public function create()
     {
-        $groups = auth()->user()->isAdmin() ? Group::all() : auth()->user()->groups;
+        $groups = auth()->user()->isAdmin() ? Group::all() : auth()->user()->groups()->get();
         return view('fines.create', compact('groups'));
     }
 

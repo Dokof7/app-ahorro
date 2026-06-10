@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BankExpense;
 use App\Models\Group;
 use App\Models\Member;
 use App\Models\Meeting;
@@ -14,6 +15,11 @@ class DashboardController extends Controller
     public function index()
     {
         $user = auth()->user();
+
+        if ($user->isMiembro()) {
+            return redirect()->route('portal.contributions');
+        }
+
         $query = $user->isAdmin() ? Group::query() : $user->groups();
 
         $groups = $query->with(['members', 'meetings'])->get();
@@ -28,8 +34,10 @@ class DashboardController extends Controller
             'total_fines'        => MeetingContribution::whereHas('meeting', fn($q) => $q->whereIn('group_id', $groupIds))->sum('fine'),
             'loans_pending'      => Loan::whereIn('group_id', $groupIds)->where('status', 'pending')->sum('balance'),
             'loans_paid'         => Loan::whereIn('group_id', $groupIds)->where('status', 'paid')->sum('total_to_return'),
-            'loans_overdue'      => Loan::whereIn('group_id', $groupIds)->where('status', 'overdue')->count(),
-            'total_membership'   => Member::whereIn('group_id', $groupIds)
+            'loans_overdue'         => Loan::whereIn('group_id', $groupIds)->where('status', 'overdue')->count(),
+            'loans_overdue_balance' => Loan::whereIn('group_id', $groupIds)->where('status', 'overdue')->sum('balance'),
+            'bank_expenses'         => BankExpense::whereIn('group_id', $groupIds)->sum('amount'),
+            'total_membership'      => Member::whereIn('group_id', $groupIds)
                                         ->where('membership_paid', true)
                                         ->join('groups', 'members.group_id', '=', 'groups.id')
                                         ->sum('groups.membership_fee'),

@@ -16,7 +16,7 @@ class LoanController extends Controller
         if ($request->ajax()) {
             $groupIds = auth()->user()->isAdmin()
                 ? Group::pluck('id')
-                : auth()->user()->groups()->pluck('id');
+                : auth()->user()->groups()->pluck('groups.id');
 
             $query = Loan::with(['member', 'group', 'meeting'])->whereIn('group_id', $groupIds);
 
@@ -32,13 +32,13 @@ class LoanController extends Controller
                 ->make(true);
         }
 
-        $groups = auth()->user()->isAdmin() ? Group::all() : auth()->user()->groups;
+        $groups = auth()->user()->isAdmin() ? Group::all() : auth()->user()->groups()->get();
         return view('loans.index', compact('groups'));
     }
 
     public function create()
     {
-        $groups = auth()->user()->isAdmin() ? Group::all() : auth()->user()->groups;
+        $groups = auth()->user()->isAdmin() ? Group::all() : auth()->user()->groups()->get();
         return view('loans.create', compact('groups'));
     }
 

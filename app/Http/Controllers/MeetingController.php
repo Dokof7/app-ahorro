@@ -17,7 +17,7 @@ class MeetingController extends Controller
         if ($request->ajax()) {
             $groupIds = auth()->user()->isAdmin()
                 ? Group::pluck('id')
-                : auth()->user()->groups()->pluck('id');
+                : auth()->user()->groups()->pluck('groups.id');
 
             $query = Meeting::with('group')->whereIn('group_id', $groupIds);
 
@@ -37,7 +37,7 @@ class MeetingController extends Controller
 
         $groups = auth()->user()->isAdmin()
             ? Group::all()
-            : auth()->user()->groups;
+            : auth()->user()->groups()->get();
 
         return view('meetings.index', compact('groups'));
     }
@@ -122,7 +122,7 @@ class MeetingController extends Controller
         if ($meeting->isClosed()) {
             return back()->with('error', 'No se puede editar una reunión cerrada.');
         }
-        $groups = auth()->user()->isAdmin() ? Group::all() : auth()->user()->groups;
+        $groups = auth()->user()->isAdmin() ? Group::all() : auth()->user()->groups()->get();
         return view('meetings.edit', compact('meeting', 'groups'));
     }
 

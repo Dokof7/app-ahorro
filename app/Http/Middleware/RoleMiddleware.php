@@ -12,7 +12,7 @@ class RoleMiddleware
     {
         $user = auth()->user();
 
-        if (!$user || !in_array($user->role, $roles)) {
+        if (!$user || !$user->hasAnyRole($roles)) {
             abort(403, 'No tienes permiso para realizar esta acción.');
         }
 

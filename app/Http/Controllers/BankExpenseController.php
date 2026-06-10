@@ -15,7 +15,7 @@ class BankExpenseController extends Controller
         if ($request->ajax()) {
             $groupIds = auth()->user()->isAdmin()
                 ? Group::pluck('id')
-                : auth()->user()->groups()->pluck('id');
+                : auth()->user()->groups()->pluck('groups.id');
 
             $query = BankExpense::with(['group', 'meeting'])->whereIn('group_id', $groupIds);
 
@@ -25,13 +25,13 @@ class BankExpenseController extends Controller
                 ->make(true);
         }
 
-        $groups = auth()->user()->isAdmin() ? Group::all() : auth()->user()->groups;
+        $groups = auth()->user()->isAdmin() ? Group::all() : auth()->user()->groups()->get();
         return view('bank_expenses.index', compact('groups'));
     }
 
     public function create()
     {
-        $groups = auth()->user()->isAdmin() ? Group::all() : auth()->user()->groups;
+        $groups = auth()->user()->isAdmin() ? Group::all() : auth()->user()->groups()->get();
         $selectedMeeting = request()->meeting_id ? Meeting::find(request()->meeting_id) : null;
         return view('bank_expenses.create', compact('groups', 'selectedMeeting'));
     }

@@ -13,6 +13,7 @@ use App\Http\Controllers\FineController;
 use App\Http\Controllers\BankExpenseController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\MemberPortalController;
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
@@ -90,5 +91,11 @@ Route::middleware('auth')->group(function () {
     // Users – admin only
     Route::middleware('admin')->group(function () {
         Route::resource('users', UserController::class)->except(['show']);
+    });
+
+    // Member portal – miembro role only
+    Route::middleware('role:miembro')->prefix('portal')->name('portal.')->group(function () {
+        Route::get('contributions', [MemberPortalController::class, 'contributions'])->name('contributions');
+        Route::get('loans',         [MemberPortalController::class, 'loans'])->name('loans');
     });
 });

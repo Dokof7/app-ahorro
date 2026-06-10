@@ -14,13 +14,7 @@ class UserController extends Controller
         if ($request->ajax()) {
             return DataTables::of(User::query())
                 ->addColumn('role_badge', function ($u) {
-                    $colors = [
-                        'admin'      => 'danger',
-                        'tesorero'   => 'warning',
-                        'secretario' => 'info',
-                        'observador' => 'secondary',
-                    ];
-                    $color = $colors[$u->role] ?? 'primary';
+                    $color = $u->role_color;
                     return '<span class="badge bg-' . $color . '">' . $u->role_label . '</span>';
                 })
                 ->addColumn('status_badge', fn($u) => $u->is_active
@@ -42,11 +36,17 @@ class UserController extends Controller
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|unique:users',
             'password' => 'required|min:8|confirmed',
-            'role'     => 'required|in:admin,tesorero,secretario,observador',
+            'role'     => 'required|in:admin,tesorero,secretario,observador,miembro',
             'phone'    => 'nullable|string',
         ]);
+
+        $role = $data['role'];
+        unset($data['role']);
         $data['password'] = Hash::make($data['password']);
-        User::create($data);
+
+        $user = User::create($data);
+        $user->assignRole($role);
+
         return redirect()->route('users.index')->with('success', 'Usuario creado.');
     }
 
@@ -57,15 +57,22 @@ class UserController extends Controller
         $data = $request->validate([
             'name'      => 'required|string|max:255',
             'email'     => 'required|email|unique:users,email,' . $user->id,
-            'role'      => 'required|in:admin,tesorero,secretario,observador',
+            'role'      => 'required|in:admin,tesorero,secretario,observador,miembro',
             'is_active' => 'boolean',
             'phone'     => 'nullable|string',
         ]);
+
         if ($request->filled('password')) {
             $request->validate(['password' => 'min:8|confirmed']);
             $data['password'] = Hash::make($request->password);
         }
+
+        $role = $data['role'];
+        unset($data['role']);
+
         $user->update($data);
+        $user->syncRoles([$role]);
+
         return redirect()->route('users.index')->with('success', 'Usuario actualizado.');
     }
 

@@ -11,7 +11,7 @@
 <div class="row">
     <div class="col-lg-3 col-6">
         <div class="small-box bg-success">
-            <div class="inner"><h3>{{ $stats['total_groups'] }}</h3><p>Grupos Activos</p></div>
+            <div class="inner"><h3>{{ $stats['total_groups'] }}</h3><p>Total Grupos</p></div>
             <div class="icon"><i class="fas fa-users-cog"></i></div>
             <a href="{{ route('groups.index') }}" class="small-box-footer">Ver grupos <i class="fas fa-arrow-circle-right"></i></a>
         </div>
@@ -126,9 +126,11 @@
             <div class="card-header">
                 <h3 class="card-title"><i class="fas fa-users-cog mr-2"></i>Mis Grupos</h3>
                 <div class="card-tools">
+                    @can('canEdit')
                     <a href="{{ route('groups.create') }}" class="btn btn-sm btn-success">
                         <i class="fas fa-plus mr-1"></i>Nuevo Grupo
                     </a>
+                    @endcan
                 </div>
             </div>
             <div class="card-body table-responsive p-0">
@@ -191,7 +193,7 @@ new Chart(ctxLoans, {
     type: 'doughnut',
     data: {
         labels: ['Pendientes', 'Pagados', 'Vencidos'],
-        datasets: [{ data: [{{ $stats['loans_pending'] }}, {{ $stats['loans_paid'] }}, {{ $stats['loans_overdue'] * 100 }}], backgroundColor: ['#ffc107', '#28a745', '#dc3545'] }]
+        datasets: [{ data: [{{ $stats['loans_pending'] }}, {{ $stats['loans_paid'] }}, {{ $stats['loans_overdue_balance'] }}], backgroundColor: ['#ffc107', '#28a745', '#dc3545'] }]
     },
     options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
 });
