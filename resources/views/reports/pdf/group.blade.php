@@ -41,7 +41,7 @@
             <tr>
                 <td>{{ $group->name }}</td>
                 <td>{{ $group->description ?? '-' }}</td>
-                <td>{{ $group->start_date }}</td>
+                <td>{{ $group->start_date->format('d/m/Y') }}</td>
                 <td style="text-align:center">{{ $group->members->count() }}</td>
                 <td style="text-align:center">{{ $group->meetings->count() }}</td>
                 <td style="text-align:right">{{ $group->membership_fee > 0 ? 'Bs. ' . number_format($group->membership_fee, 2) : '-' }}</td>

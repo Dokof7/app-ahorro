@@ -84,7 +84,7 @@ class ReportController extends Controller
     private function loanReport(array $filters, $groupIds, string $status): array
     {
         $query = Loan::whereIn('group_id', $groupIds)->where('status', $status)
-            ->with(['member', 'group', 'payments']);
+            ->with(['member', 'group', 'meeting', 'payments']);
         if ($filters['group_id']) $query->where('group_id', $filters['group_id']);
         return ['loans' => $query->get(), 'filters' => $filters, 'status' => $status];
     }
@@ -100,9 +100,12 @@ class ReportController extends Controller
     private function monthlyReport(array $filters, $groupIds): array
     {
         $query = MeetingContribution::whereHas('meeting', fn($q) => $q->whereIn('group_id', $groupIds))
-            ->with(['meeting', 'member']);
-        if ($filters['month']) {
+            ->with(['meeting.group', 'member']);
+        if (!empty($filters['month'])) {
             $query->whereHas('meeting', fn($q) => $q->where('month', $filters['month']));
+        }
+        if (!empty($filters['group_id'])) {
+            $query->whereHas('meeting', fn($q) => $q->where('group_id', $filters['group_id']));
         }
         return ['contributions' => $query->get(), 'filters' => $filters];
     }

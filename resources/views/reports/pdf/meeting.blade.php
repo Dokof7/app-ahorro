@@ -36,7 +36,7 @@
             <tr>
                 <td>{{ $meeting->meeting_number }}</td>
                 <td>{{ $meeting->group->name ?? '-' }}</td>
-                <td>{{ $meeting->meeting_date }}</td>
+                <td>{{ $meeting->meeting_date->format('d/m/Y') }}</td>
                 <td>{{ $meeting->month }}</td>
                 <td class="text-right">{{ number_format($meeting->contributions->sum('savings'), 2) }}</td>
                 <td class="text-right">{{ number_format($meeting->contributions->sum('emergency_fund'), 2) }}</td>

@@ -38,7 +38,7 @@
                 <td>{{ $member->full_name }}</td>
                 <td>{{ $member->document_number ?? '-' }}</td>
                 <td>{{ $member->group->name ?? '-' }}</td>
-                <td>{{ $member->join_date }}</td>
+                <td>{{ $member->join_date->format('d/m/Y') }}</td>
                 <td class="text-right">{{ number_format($member->contributions->sum('savings'), 2) }}</td>
                 <td class="text-right">{{ number_format($member->contributions->sum('emergency_fund'), 2) }}</td>
                 <td class="text-right">{{ number_format($member->fines->sum('amount'), 2) }}</td>

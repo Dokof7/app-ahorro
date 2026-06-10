@@ -37,8 +37,8 @@
                 <td>{{ $loan->member->full_name ?? '-' }}</td>
                 <td>{{ $loan->group->name ?? '-' }}</td>
                 <td>#{{ $loan->meeting->meeting_number ?? '-' }}</td>
-                <td>{{ $loan->delivery_date }}</td>
-                <td>{{ $loan->due_date }}</td>
+                <td>{{ $loan->delivery_date?->format('d/m/Y') ?? '-' }}</td>
+                <td>{{ $loan->due_date?->format('d/m/Y') ?? '-' }}</td>
                 <td class="text-right">{{ number_format($loan->amount, 2) }}</td>
                 <td class="text-right">{{ $loan->interest_rate }}%</td>
                 <td class="text-right">{{ number_format($loan->balance, 2) }}</td>

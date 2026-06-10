@@ -55,7 +55,12 @@
                 <div class="col-md-4 filter-month">
                     <div class="form-group">
                         <label>Mes</label>
-                        <input type="month" name="month" class="form-control">
+                        <select name="month" class="form-control">
+                            <option value="">-- Todos los meses --</option>
+                            @foreach(['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'] as $mes)
+                            <option value="{{ $mes }}">{{ $mes }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
                 <div class="col-md-4 filter-date">
