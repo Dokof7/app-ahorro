@@ -54,7 +54,9 @@ Route::middleware('auth')->group(function () {
         // Members
         Route::get('members/search-users', [MemberController::class, 'searchUsers'])
             ->name('members.search-users');
-        Route::resource('members', MemberController::class)->only(['create', 'store', 'edit', 'update', 'destroy']);
+        Route::get('members/register', [MemberController::class, 'create'])
+            ->name('members.create');
+        Route::resource('members', MemberController::class)->only(['store', 'edit', 'update', 'destroy']);
         Route::get('groups/{group}/members/create', [MemberController::class, 'createForGroup'])
             ->name('groups.members.create');
         Route::post('members/{member}/membership-paid', [MemberController::class, 'markMembershipPaid'])
