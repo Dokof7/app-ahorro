@@ -27,11 +27,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/home', [DashboardController::class, 'index'])->name('home');
 
     // READ routes – all authenticated roles
-    Route::resource('groups',  GroupController::class)->only(['index', 'show']);
-    Route::get('members/register',     [MemberController::class, 'create'])->name('members.create')->middleware('role:admin,tesorero,secretario');
-    Route::get('members/search-users', [MemberController::class, 'searchUsers'])->name('members.search-users')->middleware('role:admin,tesorero,secretario');
-    Route::resource('members', MemberController::class)->only(['index', 'show']);
-    Route::resource('meetings', MeetingController::class)->only(['index', 'show']);
+    Route::get('groups/new',           [GroupController::class,   'create'])->name('groups.create')->middleware('role:admin,tesorero,secretario');
+    Route::resource('groups',          GroupController::class)->only(['index', 'show']);
+    Route::get('members/register',     [MemberController::class,  'create'])->name('members.create')->middleware('role:admin,tesorero,secretario');
+    Route::get('members/search-users', [MemberController::class,  'searchUsers'])->name('members.search-users')->middleware('role:admin,tesorero,secretario');
+    Route::resource('members',         MemberController::class)->only(['index', 'show']);
+    Route::get('meetings/new',         [MeetingController::class, 'create'])->name('meetings.create')->middleware('role:admin,tesorero,secretario');
+    Route::resource('meetings',        MeetingController::class)->only(['index', 'show']);
     Route::resource('loans', LoanController::class)->only(['index', 'show'])
         ->where(['loan' => '[0-9]+']);
     Route::get('loans/members/{groupId}',  [LoanController::class, 'getMembersByGroup'])->name('loans.members');
@@ -51,7 +53,6 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:admin,tesorero,secretario')->group(function () {
 
         // Groups
-        Route::get('groups/new',  [GroupController::class, 'create'])->name('groups.create');
         Route::resource('groups', GroupController::class)->only(['store', 'edit', 'update', 'destroy']);
 
         // Members
@@ -65,7 +66,6 @@ Route::middleware('auth')->group(function () {
         Route::delete('members/{member}/unlink-user', [MemberController::class, 'unlinkUser'])->name('members.unlink-user');
 
         // Meetings
-        Route::get('meetings/new', [MeetingController::class, 'create'])->name('meetings.create');
         Route::resource('meetings', MeetingController::class)->only(['store', 'edit', 'update', 'destroy']);
         Route::post('meetings/{meeting}/close',  [MeetingController::class, 'close'])->name('meetings.close');
         Route::post('meetings/{meeting}/reopen', [MeetingController::class, 'reopen'])->name('meetings.reopen');
