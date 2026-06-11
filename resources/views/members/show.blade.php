@@ -92,6 +92,75 @@
     </div>
 </div>
 
+@can('canEdit')
+<div class="card">
+    <div class="card-header"><h3 class="card-title">Cuenta de Usuario</h3></div>
+    <div class="card-body">
+        @if($member->user)
+            <p class="mb-1"><strong>Usuario vinculado:</strong> {{ $member->user->name }}</p>
+            <p class="mb-3"><strong>Email:</strong> {{ $member->user->email }}</p>
+            <form action="{{ route('members.unlink-user', $member) }}" method="POST" class="d-inline"
+                  onsubmit="return confirm('¿Desvincular este usuario del miembro?')">
+                @csrf @method('DELETE')
+                <button type="submit" class="btn btn-sm btn-danger">
+                    <i class="fas fa-unlink mr-1"></i>Desvincular usuario
+                </button>
+            </form>
+        @else
+            <p class="text-muted mb-3">Este miembro no tiene cuenta de usuario asignada.</p>
+
+            {{-- Vincular usuario existente --}}
+            <form action="{{ route('members.link-user', $member) }}" method="POST" class="mb-4">
+                @csrf
+                <h6>Vincular usuario existente</h6>
+                <div class="input-group">
+                    <select name="user_id" class="form-control select2" required>
+                        <option value="">-- Seleccionar usuario --</option>
+                        @foreach(\App\Models\User::whereDoesntHave('member')->get() as $u)
+                            <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->email }})</option>
+                        @endforeach
+                    </select>
+                    <div class="input-group-append">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-link mr-1"></i>Vincular
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <hr>
+
+            {{-- Crear nueva cuenta --}}
+            <h6>Crear nueva cuenta</h6>
+            <form action="{{ route('members.create-user', $member) }}" method="POST">
+                @csrf
+                <div class="form-group">
+                    <label>Nombre</label>
+                    <input type="text" name="name" class="form-control" value="{{ old('name', $member->full_name) }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" class="form-control" value="{{ old('email') }}" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label>Contraseña</label>
+                        <input type="password" name="password" class="form-control" required minlength="8">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>Confirmar contraseña</label>
+                        <input type="password" name="password_confirmation" class="form-control" required minlength="8">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-user-plus mr-1"></i>Crear cuenta
+                </button>
+            </form>
+        @endif
+    </div>
+</div>
+@endcan
+
 <div class="card">
     <div class="card-header"><h3 class="card-title">Historial de Aportes</h3></div>
     <div class="card-body p-0">

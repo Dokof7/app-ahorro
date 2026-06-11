@@ -57,6 +57,9 @@ Route::middleware('auth')->group(function () {
             ->name('groups.members.create');
         Route::post('members/{member}/membership-paid', [MemberController::class, 'markMembershipPaid'])
             ->name('members.membership-paid');
+        Route::post('members/{member}/link-user',    [MemberController::class, 'linkUser'])->name('members.link-user');
+        Route::post('members/{member}/create-user',  [MemberController::class, 'createUser'])->name('members.create-user');
+        Route::delete('members/{member}/unlink-user', [MemberController::class, 'unlinkUser'])->name('members.unlink-user');
 
         // Meetings
         Route::resource('meetings', MeetingController::class)->only(['create', 'store', 'edit', 'update', 'destroy']);

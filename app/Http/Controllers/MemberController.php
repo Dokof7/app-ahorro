@@ -7,7 +7,9 @@ use App\Models\Group;
 use App\Models\Meeting;
 use App\Models\Attendance;
 use App\Models\MeetingContribution;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Yajra\DataTables\DataTables;
 
 class MemberController extends Controller
@@ -86,7 +88,7 @@ class MemberController extends Controller
     public function show(Member $member)
     {
         $this->authorize('view', $member);
-        $member->load(['group', 'contributions.meeting', 'loans', 'fines']);
+        $member->load(['group', 'contributions.meeting', 'loans', 'fines', 'user']);
 
         $stats = [
             'total_savings'   => $member->total_savings,
@@ -138,6 +140,65 @@ class MemberController extends Controller
         ]);
 
         return back()->with('success', 'Membresía de ' . $member->full_name . ' marcada como pagada.');
+    }
+
+    public function linkUser(Request $request, Member $member)
+    {
+        $this->authorize('update', $member);
+
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        $user = User::findOrFail($request->user_id);
+
+        if ($user->member()->exists()) {
+            return back()->with('error', 'Ese usuario ya está vinculado a otro miembro.');
+        }
+
+        $member->update(['user_id' => $user->id]);
+
+        if (!$user->hasRole('miembro')) {
+            $user->assignRole('miembro');
+        }
+
+        return back()->with('success', 'Usuario vinculado correctamente.');
+    }
+
+    public function createUser(Request $request, Member $member)
+    {
+        $this->authorize('update', $member);
+
+        $request->validate([
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = User::create([
+            'name'      => $request->name,
+            'email'     => $request->email,
+            'password'  => Hash::make($request->password),
+            'is_active' => true,
+        ]);
+
+        $user->assignRole('miembro');
+        $member->update(['user_id' => $user->id]);
+
+        return back()->with('success', 'Cuenta creada y vinculada correctamente.');
+    }
+
+    public function unlinkUser(Member $member)
+    {
+        $this->authorize('update', $member);
+
+        if (!$member->user_id) {
+            return back()->with('error', 'Este miembro no tiene usuario vinculado.');
+        }
+
+        $member->update(['user_id' => null]);
+
+        return back()->with('success', 'Usuario desvinculado.');
     }
 
     public function destroy(Member $member)
