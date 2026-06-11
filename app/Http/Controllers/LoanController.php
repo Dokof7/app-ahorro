@@ -18,7 +18,7 @@ class LoanController extends Controller
                 ? Group::pluck('id')
                 : auth()->user()->groups()->pluck('groups.id');
 
-            $query = Loan::with(['member', 'group', 'meeting'])->whereIn('group_id', $groupIds);
+            $query = Loan::with(['member', 'group', 'meeting'])->whereIn('loans.group_id', $groupIds);
 
             return DataTables::of($query)
                 ->addColumn('status_badge', fn($l) => match($l->status) {
