@@ -53,6 +53,23 @@ class MemberController extends Controller
         return view('members.create', ['groups' => $groups, 'selectedGroup' => $group]);
     }
 
+    public function searchUsers(Request $request)
+    {
+        $q = $request->get('q', '');
+        $users = User::whereNull('deleted_at')
+            ->whereDoesntHave('member')
+            ->where(function ($query) use ($q) {
+                $query->where('name', 'like', "%{$q}%")
+                      ->orWhere('email', 'like', "%{$q}%");
+            })
+            ->select('id', 'name', 'email')
+            ->limit(10)
+            ->get()
+            ->map(fn($u) => ['id' => $u->id, 'text' => "{$u->name} ({$u->email})"]);
+
+        return response()->json(['results' => $users]);
+    }
+
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -63,7 +80,15 @@ class MemberController extends Controller
             'address'         => 'nullable|string',
             'join_date'       => 'required|date',
             'status'          => 'required|in:active,inactive',
+            'user_id'         => 'nullable|exists:users,id',
         ]);
+
+        if (!empty($data['user_id'])) {
+            $user = User::findOrFail($data['user_id']);
+            if ($user->member()->exists()) {
+                return back()->withErrors(['user_id' => 'Ese usuario ya está vinculado a otro miembro.'])->withInput();
+            }
+        }
 
         $member = Member::create($data);
 

@@ -64,6 +64,23 @@
                                 </select>
                             </div>
                         </div>
+
+                        <div class="col-md-12">
+                            <hr>
+                            <h6 class="text-muted"><i class="fas fa-user-circle mr-1"></i>Cuenta de usuario (opcional)</h6>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label>Vincular usuario existente</label>
+                                <select name="user_id" id="user_id"
+                                    class="form-control @error('user_id') is-invalid @enderror"
+                                    style="width:100%">
+                                    <option value="">Sin vincular</option>
+                                </select>
+                                <small class="form-text text-muted">Buscá por nombre o email. Solo muestra usuarios sin miembro asignado.</small>
+                                @error('user_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="card-footer">
@@ -75,3 +92,22 @@
     </div>
 </div>
 @endsection
+@push('js')
+<script>
+$('#user_id').select2({
+    theme: 'bootstrap4',
+    width: '100%',
+    placeholder: 'Buscar usuario por nombre o email...',
+    allowClear: true,
+    minimumInputLength: 2,
+    ajax: {
+        url: '{{ route("members.search-users") }}',
+        dataType: 'json',
+        delay: 300,
+        data: function(params) { return { q: params.term }; },
+        processResults: function(data) { return { results: data.results }; },
+        cache: true
+    }
+});
+</script>
+@endpush
