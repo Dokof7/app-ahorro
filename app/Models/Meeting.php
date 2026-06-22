@@ -31,12 +31,6 @@ class Meeting extends Model
 
     protected static function booted()
     {
-        static::saving(function ($meeting) {
-            if ($meeting->isDirty('meeting_number') && $meeting->exists) {
-                throw new \RuntimeException('No se puede cambiar el número de reunión.');
-            }
-        });
-
         static::deleting(function ($meeting) {
             if ($meeting->loans()->whereIn('status', ['pending', 'overdue'])->exists()) {
                 throw new \RuntimeException('No se puede eliminar una reunión con préstamos pendientes o vencidos.');

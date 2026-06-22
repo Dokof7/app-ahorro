@@ -55,21 +55,14 @@ class MeetingController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'group_id'       => 'required|exists:groups,id',
-            'meeting_number' => 'required|integer|min:1',
-            'meeting_date'   => 'required|date',
-            'month'          => 'required|string|max:20',
-            'observations'   => 'nullable|string',
-            'status'         => 'required|in:open,closed',
+            'group_id'     => 'required|exists:groups,id',
+            'meeting_date' => 'required|date',
+            'month'        => 'required|string|max:20',
+            'observations' => 'nullable|string',
+            'status'       => 'required|in:open,closed',
         ]);
 
-        $exists = Meeting::where('group_id', $data['group_id'])
-            ->where('meeting_number', $data['meeting_number'])
-            ->exists();
-
-        if ($exists) {
-            return back()->withErrors(['meeting_number' => 'Ya existe una reunión con ese número en este grupo.'])->withInput();
-        }
+        $data['meeting_number'] = Meeting::where('group_id', $data['group_id'])->max('meeting_number') + 1;
 
         $meeting = Meeting::create($data);
 
