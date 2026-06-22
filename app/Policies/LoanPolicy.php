@@ -9,11 +9,11 @@ class LoanPolicy
 {
     public function view(User $user, Loan $loan): bool
     {
-        return $user->isAdmin() || $loan->group->user_id === $user->id;
+        return $user->isAdmin() || $user->groups()->where('groups.id', $loan->group_id)->exists();
     }
 
     public function delete(User $user, Loan $loan): bool
     {
-        return $user->isAdmin() || $loan->group->user_id === $user->id;
+        return $user->isAdmin();
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Group;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -28,7 +29,11 @@ class UserController extends Controller
         return view('users.index');
     }
 
-    public function create() { return view('users.create'); }
+    public function create()
+    {
+        $groups = Group::orderBy('name')->get();
+        return view('users.create', compact('groups'));
+    }
 
     public function store(Request $request)
     {
@@ -38,19 +43,27 @@ class UserController extends Controller
             'password' => 'required|min:8|confirmed',
             'role'     => 'required|in:admin,tesorero,secretario,observador,miembro',
             'phone'    => 'nullable|string',
+            'groups'   => 'nullable|array',
+            'groups.*' => 'exists:groups,id',
         ]);
 
         $role = $data['role'];
-        unset($data['role']);
+        $groupIds = $data['groups'] ?? [];
+        unset($data['role'], $data['groups']);
         $data['password'] = Hash::make($data['password']);
 
         $user = User::create($data);
         $user->assignRole($role);
+        $user->groups()->sync($groupIds);
 
         return redirect()->route('users.index')->with('success', 'Usuario creado.');
     }
 
-    public function edit(User $user) { return view('users.edit', compact('user')); }
+    public function edit(User $user)
+    {
+        $groups = Group::orderBy('name')->get();
+        return view('users.edit', compact('user', 'groups'));
+    }
 
     public function update(Request $request, User $user)
     {
@@ -60,6 +73,8 @@ class UserController extends Controller
             'role'      => 'required|in:admin,tesorero,secretario,observador,miembro',
             'is_active' => 'boolean',
             'phone'     => 'nullable|string',
+            'groups'    => 'nullable|array',
+            'groups.*'  => 'exists:groups,id',
         ]);
 
         if ($request->filled('password')) {
@@ -68,10 +83,12 @@ class UserController extends Controller
         }
 
         $role = $data['role'];
-        unset($data['role']);
+        $groupIds = $data['groups'] ?? [];
+        unset($data['role'], $data['groups']);
 
         $user->update($data);
         $user->syncRoles([$role]);
+        $user->groups()->sync($groupIds);
 
         return redirect()->route('users.index')->with('success', 'Usuario actualizado.');
     }

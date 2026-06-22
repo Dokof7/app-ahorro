@@ -9,16 +9,16 @@ class GroupPolicy
 {
     public function view(User $user, Group $group): bool
     {
-        return $user->isAdmin() || $group->user_id === $user->id;
+        return $user->isAdmin() || $user->groups()->where('groups.id', $group->id)->exists();
     }
 
     public function update(User $user, Group $group): bool
     {
-        return $user->isAdmin() || $group->user_id === $user->id;
+        return $user->isAdmin() || $user->groups()->where('groups.id', $group->id)->exists();
     }
 
     public function delete(User $user, Group $group): bool
     {
-        return $user->isAdmin() || $group->user_id === $user->id;
+        return $user->isAdmin();
     }
 }

@@ -58,6 +58,21 @@
                         @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                 </div>
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label>Grupos asignados <small class="text-muted">(para tesorero, secretario y observador)</small></label>
+                        <select name="groups[]" class="form-control @error('groups') is-invalid @enderror" multiple size="5">
+                            @foreach($groups as $group)
+                            <option value="{{ $group->id }}"
+                                {{ in_array($group->id, old('groups', $user->groups->pluck('id')->toArray())) ? 'selected' : '' }}>
+                                {{ $group->name }}
+                            </option>
+                            @endforeach
+                        </select>
+                        <small class="form-text text-muted">Mantené Ctrl (o Cmd en Mac) para seleccionar varios.</small>
+                        @error('groups')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                </div>
                 <div class="col-md-4">
                     <div class="form-group">
                         <label>Estado</label>

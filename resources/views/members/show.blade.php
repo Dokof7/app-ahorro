@@ -169,7 +169,7 @@
             <tbody>
                 @forelse($member->contributions as $c)
                 <tr>
-                    <td>N° {{ $c->meeting->meeting_number }} - {{ $c->meeting->month }}</td>
+                    <td>N° {{ $c->meeting?->meeting_number ?? '—' }} - {{ $c->meeting?->month ?? 'Sin reunión' }}</td>
                     <td>Bs. {{ number_format($c->savings, 2) }}</td>
                     <td>Bs. {{ number_format($c->emergency_fund, 2) }}</td>
                     <td>Bs. {{ number_format($c->fine, 2) }}</td>
