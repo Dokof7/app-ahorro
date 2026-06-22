@@ -62,7 +62,7 @@ class MeetingController extends Controller
             'status'       => 'required|in:open,closed',
         ]);
 
-        $data['meeting_number'] = Meeting::where('group_id', $data['group_id'])->max('meeting_number') + 1;
+        $data['meeting_number'] = Meeting::withTrashed()->where('group_id', $data['group_id'])->max('meeting_number') + 1;
 
         $meeting = Meeting::create($data);
 
