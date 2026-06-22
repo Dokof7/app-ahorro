@@ -212,11 +212,13 @@ new Chart(ctxShares, {
     },
     options: {
         responsive: true,
-        plugins: {
-            legend: { display: false },
-            tooltip: {
-                callbacks: {
-                    label: ctx => ` ${ctx.label}: Bs. ${ctx.parsed.toFixed(2)}`
+        legend: { display: false },
+        tooltips: {
+            callbacks: {
+                label: function(item, data) {
+                    var label = data.labels[item.index] || '';
+                    var value = data.datasets[0].data[item.index];
+                    return ' ' + label + ': Bs. ' + parseFloat(value).toFixed(2);
                 }
             }
         }
