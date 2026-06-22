@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Loan;
 use App\Models\Member;
 use App\Models\MeetingContribution;
 use Illuminate\Http\Request;
@@ -12,12 +13,13 @@ class SavingsApiController extends Controller
     public function index(Request $request)
     {
         $user   = $request->user();
-        $member = Member::where('user_id', $user->id)->first();
+        $member = Member::with('group')->where('user_id', $user->id)->first();
 
         if (!$member) {
             return response()->json([
-                'member'       => null,
-                'total'        => ['savings' => 0, 'emergency' => 0, 'fines' => 0, 'grand_total' => 0],
+                'member'        => null,
+                'total'         => ['savings' => 0, 'emergency' => 0, 'fines' => 0, 'loans' => 0],
+                'membership'    => ['paid' => false, 'paid_at' => null],
                 'contributions' => [],
             ]);
         }
@@ -26,6 +28,8 @@ class SavingsApiController extends Controller
             ->where('member_id', $member->id)
             ->orderBy('created_at', 'asc')
             ->get();
+
+        $totalLoans = (float) Loan::where('member_id', $member->id)->sum('amount');
 
         $rows = $contributions->map(fn($c) => [
             'meeting_number' => $c->meeting?->meeting_number,
@@ -39,10 +43,10 @@ class SavingsApiController extends Controller
         ]);
 
         $total = [
-            'savings'     => (float) $contributions->sum('savings'),
-            'emergency'   => (float) $contributions->sum('emergency_fund'),
-            'fines'       => (float) $contributions->sum('fine'),
-            'grand_total' => (float) $contributions->sum('total'),
+            'savings'   => (float) $contributions->sum('savings'),
+            'emergency' => (float) $contributions->sum('emergency_fund'),
+            'fines'     => (float) $contributions->sum('fine'),
+            'loans'     => $totalLoans,
         ];
 
         return response()->json([
@@ -50,6 +54,10 @@ class SavingsApiController extends Controller
                 'id'        => $member->id,
                 'full_name' => $member->full_name,
                 'group'     => $member->group?->name,
+            ],
+            'membership' => [
+                'paid'    => (bool) $member->membership_paid,
+                'paid_at' => $member->membership_paid_at?->format('d/m/Y'),
             ],
             'total'         => $total,
             'contributions' => $rows,
