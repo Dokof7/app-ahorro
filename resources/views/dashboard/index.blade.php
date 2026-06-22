@@ -119,7 +119,16 @@
     <div class="col-md-4">
         <div class="card card-primary">
             <div class="card-header"><h3 class="card-title"><i class="fas fa-chart-pie mr-2"></i>Acciones por miembro (últimas 4 reuniones)</h3></div>
-            <div class="card-body"><canvas id="sharesChart" height="200"></canvas></div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-7">
+                        <canvas id="sharesChart"></canvas>
+                    </div>
+                    <div class="col-5">
+                        <ul id="sharesLegend" class="list-unstyled mb-0" style="font-size:0.78rem; max-height:220px; overflow-y:auto;"></ul>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -200,15 +209,13 @@ const palette = [
     '#20c997','#e83e8c','#007bff','#6c757d','#343a40','#f8f9fa'
 ];
 
+const sharesColors = sharesLabels.map((_, i) => palette[i % palette.length]);
 const ctxShares = document.getElementById('sharesChart').getContext('2d');
 new Chart(ctxShares, {
     type: 'doughnut',
     data: {
         labels: sharesLabels,
-        datasets: [{
-            data: sharesData,
-            backgroundColor: sharesLabels.map((_, i) => palette[i % palette.length])
-        }]
+        datasets: [{ data: sharesData, backgroundColor: sharesColors }]
     },
     options: {
         responsive: true,
@@ -223,6 +230,14 @@ new Chart(ctxShares, {
             }
         }
     }
+});
+
+const legend = document.getElementById('sharesLegend');
+sharesLabels.forEach(function(name, i) {
+    legend.innerHTML += `<li class="mb-1">
+        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${sharesColors[i]};margin-right:5px;"></span>
+        ${name}: <strong>Bs. ${parseFloat(sharesData[i]).toFixed(2)}</strong>
+    </li>`;
 });
 </script>
 @endpush
