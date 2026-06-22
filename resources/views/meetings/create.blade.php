@@ -9,7 +9,7 @@
                 @csrf
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-9">
                             <div class="form-group">
                                 <label>Grupo <span class="text-danger">*</span></label>
                                 <select name="group_id" class="form-control select2 @error('group_id') is-invalid @enderror" required>
@@ -35,18 +35,16 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Fecha de la Reunión <span class="text-danger">*</span></label>
-                                <input type="date" name="meeting_date" class="form-control" value="{{ old('meeting_date', date('Y-m-d')) }}" required>
+                                <input type="date" id="meeting_date" name="meeting_date" class="form-control"
+                                    value="{{ old('meeting_date', date('Y-m-d')) }}" required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Mes <span class="text-danger">*</span></label>
-                                <select name="month" class="form-control">
-                                    @php $meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']; @endphp
-                                    @foreach($meses as $mes)
-                                        <option value="{{ $mes }}" {{ old('month', now()->translatedFormat('F')) == $mes ? 'selected' : '' }}>{{ $mes }}</option>
-                                    @endforeach
-                                </select>
+                                <label>Mes</label>
+                                <input type="text" id="month_display" class="form-control" readonly
+                                    style="background:#f4f6f9; cursor:default;">
+                                <input type="hidden" id="month" name="month" value="">
                             </div>
                         </div>
                         <div class="col-12">
@@ -70,3 +68,20 @@
     </div>
 </div>
 @endsection
+
+@push('js')
+<script>
+const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+function updateMonth(dateVal) {
+    if (!dateVal) return;
+    const month = meses[new Date(dateVal + 'T00:00:00').getMonth()];
+    document.getElementById('month_display').value = month;
+    document.getElementById('month').value = month;
+}
+
+const dateInput = document.getElementById('meeting_date');
+dateInput.addEventListener('change', function() { updateMonth(this.value); });
+updateMonth(dateInput.value);
+</script>
+@endpush

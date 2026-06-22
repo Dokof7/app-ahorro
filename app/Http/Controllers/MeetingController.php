@@ -44,11 +44,20 @@ class MeetingController extends Controller
 
     public function create(Request $request)
     {
-        $groups = auth()->user()->isAdmin()
-            ? Group::where('status', 'active')->get()
-            : auth()->user()->groups()->where('status', 'active')->get();
+        $user = auth()->user();
 
-        $selectedGroup = $request->group_id ? Group::find($request->group_id) : null;
+        $groups = $user->isAdmin()
+            ? Group::where('status', 'active')->get()
+            : $user->groups()->where('status', 'active')->get();
+
+        if ($request->group_id) {
+            $selectedGroup = Group::find($request->group_id);
+        } elseif ($user->isAdmin() && session('active_group_id')) {
+            $selectedGroup = Group::find(session('active_group_id'));
+        } else {
+            $selectedGroup = $groups->first();
+        }
+
         return view('meetings.create', compact('groups', 'selectedGroup'));
     }
 
