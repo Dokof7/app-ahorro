@@ -213,7 +213,7 @@ new Chart(ctxShares, {
     options: {
         responsive: true,
         plugins: {
-            legend: { position: 'bottom' },
+            legend: { display: false },
             tooltip: {
                 callbacks: {
                     label: ctx => ` ${ctx.label}: Bs. ${ctx.parsed.toFixed(2)}`
