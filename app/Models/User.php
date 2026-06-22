@@ -21,30 +21,33 @@ class User extends Authenticatable
     ];
 
     const ROLES = [
-        'admin'      => 'Administrador',
-        'tesorero'   => 'Tesorero',
-        'secretario' => 'Secretario',
-        'observador' => 'Observador',
-        'miembro'    => 'Miembro',
+        'admin'       => 'Administrador',
+        'admin_grupo' => 'Admin de Grupo',
+        'tesorero'    => 'Tesorero',
+        'secretario'  => 'Secretario',
+        'observador'  => 'Observador',
+        'miembro'     => 'Miembro',
     ];
 
     const ROLE_COLORS = [
-        'admin'      => 'danger',
-        'tesorero'   => 'warning',
-        'secretario' => 'info',
-        'observador' => 'secondary',
-        'miembro'    => 'success',
+        'admin'       => 'danger',
+        'admin_grupo' => 'primary',
+        'tesorero'    => 'warning',
+        'secretario'  => 'info',
+        'observador'  => 'secondary',
+        'miembro'     => 'success',
     ];
 
     public function ownedGroups() { return $this->hasMany(Group::class); }
     public function groups() { return $this->belongsToMany(Group::class); }
     public function member() { return $this->hasOne(Member::class); }
 
-    public function isAdmin()      { return $this->hasRole('admin'); }
-    public function isTesorero()   { return $this->hasRole('tesorero'); }
-    public function isSecretario() { return $this->hasRole('secretario'); }
-    public function isObservador() { return $this->hasRole('observador'); }
-    public function isMiembro()    { return $this->hasRole('miembro'); }
+    public function isAdmin()       { return $this->hasRole('admin'); }
+    public function isAdminGrupo()  { return $this->hasRole('admin_grupo'); }
+    public function isTesorero()    { return $this->hasRole('tesorero'); }
+    public function isSecretario()  { return $this->hasRole('secretario'); }
+    public function isObservador()  { return $this->hasRole('observador'); }
+    public function isMiembro()     { return $this->hasRole('miembro'); }
 
     public function canEdit() { return !$this->hasRole(['observador', 'miembro']); }
 

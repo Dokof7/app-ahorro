@@ -27,12 +27,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/home', [DashboardController::class, 'index'])->name('home');
 
     // READ routes – all authenticated roles
-    Route::get('groups/new',           [GroupController::class,   'create'])->name('groups.create')->middleware('role:admin,tesorero,secretario');
-    Route::resource('groups',          GroupController::class)->only(['index', 'show']);
-    Route::get('members/register',     [MemberController::class,  'create'])->name('members.create')->middleware('role:admin,tesorero,secretario');
-    Route::get('members/search-users', [MemberController::class,  'searchUsers'])->name('members.search-users')->middleware('role:admin,tesorero,secretario');
+    Route::get('members/register',     [MemberController::class,  'create'])->name('members.create')->middleware('role:admin,admin_grupo,tesorero,secretario');
+    Route::get('members/search-users', [MemberController::class,  'searchUsers'])->name('members.search-users')->middleware('role:admin,admin_grupo,tesorero,secretario');
     Route::resource('members',         MemberController::class)->only(['index', 'show']);
-    Route::get('meetings/new',         [MeetingController::class, 'create'])->name('meetings.create')->middleware('role:admin,tesorero,secretario');
+    Route::get('meetings/new',         [MeetingController::class, 'create'])->name('meetings.create')->middleware('role:admin,admin_grupo,tesorero,secretario');
     Route::resource('meetings',        MeetingController::class)->only(['index', 'show']);
     Route::resource('loans', LoanController::class)->only(['index', 'show'])
         ->where(['loan' => '[0-9]+']);
@@ -49,14 +47,17 @@ Route::middleware('auth')->group(function () {
     Route::post('reports/generate',               [ReportController::class, 'generate'])->name('reports.generate');
     Route::get('reports/members/{group}',         [ReportController::class, 'membersByGroup'])->name('reports.members');
 
-    // WRITE routes – admin, tesorero, secretario (not observador)
-    Route::middleware('role:admin,tesorero,secretario')->group(function () {
+    // Groups – admin only
+    Route::middleware('admin')->group(function () {
+        Route::get('groups/new', [GroupController::class, 'create'])->name('groups.create');
+        Route::resource('groups', GroupController::class)->only(['index', 'show', 'store', 'edit', 'update', 'destroy']);
+    });
 
-        // Groups
-        Route::resource('groups', GroupController::class)->only(['store', 'edit', 'update', 'destroy']);
+    // WRITE routes – admin, admin_grupo, tesorero, secretario (not observador)
+    Route::middleware('role:admin,admin_grupo,tesorero,secretario')->group(function () {
 
         // Members
-        Route::resource('members', MemberController::class)->only(['store', 'edit', 'update', 'destroy']);
+        Route::resource('members', MemberController::class)->only(['store', 'edit', 'update']);
         Route::get('groups/{group}/members/new', [MemberController::class, 'createForGroup'])
             ->name('groups.members.create');
         Route::post('members/{member}/membership-paid', [MemberController::class, 'markMembershipPaid'])
@@ -66,7 +67,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('members/{member}/unlink-user', [MemberController::class, 'unlinkUser'])->name('members.unlink-user');
 
         // Meetings
-        Route::resource('meetings', MeetingController::class)->only(['store', 'edit', 'update', 'destroy']);
+        Route::resource('meetings', MeetingController::class)->only(['store', 'edit', 'update']);
         Route::post('meetings/{meeting}/close',  [MeetingController::class, 'close'])->name('meetings.close');
         Route::post('meetings/{meeting}/reopen', [MeetingController::class, 'reopen'])->name('meetings.reopen');
 
@@ -74,7 +75,7 @@ Route::middleware('auth')->group(function () {
         Route::post('meetings/{meeting}/attendance', [AttendanceController::class, 'update'])
             ->name('meetings.attendance.update');
 
-        // Contributions (financial – also accessible to tesorero+secretario for now)
+        // Contributions
         Route::put('meetings/{meeting}/contributions/{contribution}', [ContributionController::class, 'update'])
             ->name('meetings.contributions.update');
         Route::post('meetings/{meeting}/contributions/bulk', [ContributionController::class, 'bulkUpdate'])
@@ -82,20 +83,29 @@ Route::middleware('auth')->group(function () {
 
         // Loans write
         Route::get('loans/new', [LoanController::class, 'create'])->name('loans.create');
-        Route::resource('loans', LoanController::class)->except(['edit', 'update', 'show', 'index', 'create']);
+        Route::resource('loans', LoanController::class)->only(['store']);
 
         // Loan Payments
-        Route::post('loan-payments',                      [LoanPaymentController::class, 'store'])->name('loan-payments.store');
-        Route::delete('loan-payments/{loanPayment}',      [LoanPaymentController::class, 'destroy'])->name('loan-payments.destroy');
+        Route::post('loan-payments', [LoanPaymentController::class, 'store'])->name('loan-payments.store');
 
         // Fines write
         Route::get('fines/new', [FineController::class, 'create'])->name('fines.create');
-        Route::resource('fines', FineController::class)->except(['edit', 'update', 'show', 'index', 'create']);
+        Route::resource('fines', FineController::class)->only(['store']);
         Route::post('fines/{fine}/mark-paid', [FineController::class, 'markPaid'])->name('fines.mark-paid');
 
         // Bank Expenses write
         Route::get('bank-expenses/new', [BankExpenseController::class, 'create'])->name('bank-expenses.create');
-        Route::resource('bank-expenses', BankExpenseController::class)->except(['show', 'index', 'create']);
+        Route::resource('bank-expenses', BankExpenseController::class)->only(['store', 'edit', 'update']);
+    });
+
+    // DELETE routes – admin only
+    Route::middleware('admin')->group(function () {
+        Route::delete('members/{member}',           [MemberController::class,     'destroy'])->name('members.destroy');
+        Route::delete('meetings/{meeting}',         [MeetingController::class,    'destroy'])->name('meetings.destroy');
+        Route::delete('loans/{loan}',               [LoanController::class,       'destroy'])->name('loans.destroy');
+        Route::delete('loan-payments/{loanPayment}',[LoanPaymentController::class,'destroy'])->name('loan-payments.destroy');
+        Route::delete('fines/{fine}',               [FineController::class,       'destroy'])->name('fines.destroy');
+        Route::delete('bank-expenses/{bankExpense}',[BankExpenseController::class,'destroy'])->name('bank-expenses.destroy');
     });
 
     // Users – admin only

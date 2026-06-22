@@ -13,7 +13,11 @@
         <div class="small-box bg-success">
             <div class="inner"><h3>{{ $stats['total_groups'] }}</h3><p>Total Grupos</p></div>
             <div class="icon"><i class="fas fa-users-cog"></i></div>
+            @can('admin')
             <a href="{{ route('groups.index') }}" class="small-box-footer">Ver grupos <i class="fas fa-arrow-circle-right"></i></a>
+            @else
+            <span class="small-box-footer">&nbsp;</span>
+            @endcan
         </div>
     </div>
     <div class="col-lg-3 col-6">
@@ -126,7 +130,7 @@
             <div class="card-header">
                 <h3 class="card-title"><i class="fas fa-users-cog mr-2"></i>Mis Grupos</h3>
                 <div class="card-tools">
-                    @can('canEdit')
+                    @can('admin')
                     <a href="{{ route('groups.create') }}" class="btn btn-sm btn-success">
                         <i class="fas fa-plus mr-1"></i>Nuevo Grupo
                     </a>

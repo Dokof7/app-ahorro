@@ -41,7 +41,7 @@ class UserController extends Controller
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|unique:users',
             'password' => 'required|min:8|confirmed',
-            'role'     => 'required|in:admin,tesorero,secretario,observador,miembro',
+            'role'     => 'required|in:admin,admin_grupo,tesorero,secretario,observador,miembro',
             'phone'    => 'nullable|string',
             'groups'   => 'nullable|array',
             'groups.*' => 'exists:groups,id',

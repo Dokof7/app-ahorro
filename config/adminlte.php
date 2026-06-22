@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'title' => 'SYS AHORRRO',
+    'title' => 'AdminLTE 3',
     'title_prefix' => '',
     'title_postfix' => '',
 
@@ -63,12 +63,12 @@ return [
     |
     */
 
-    'logo' => '<b>SYS</b> AHORRRO',
+    'logo' => '<b>Admin</b>LTE',
     'logo_img' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
     'logo_img_class' => 'brand-image img-circle elevation-3',
     'logo_img_xl' => null,
     'logo_img_xl_class' => 'brand-image-xs',
-    'logo_img_alt' => 'SYS AHORRRO',
+    'logo_img_alt' => 'Admin Logo',
 
     /*
     |--------------------------------------------------------------------------
@@ -312,73 +312,60 @@ return [
 
         // Sidebar items:
         [
-            'type' => 'sidebar-menu-search',
-            'text' => 'search',
-        ],
-
-        ['header' => 'PRINCIPAL'],
-        [
-            'text' => 'Dashboard',
-            'url'  => 'dashboard',
-            'icon' => 'fas fa-fw fa-tachometer-alt',
-            'active' => ['dashboard'],
+            'text'  => 'Inicio',
+            'route' => 'dashboard',
+            'icon'  => 'fas fa-fw fa-tachometer-alt',
         ],
 
         ['header' => 'GESTIÓN'],
-        [
-            'text' => 'Grupos',
-            'url'  => 'groups',
-            'icon' => 'fas fa-fw fa-users-cog',
-            'active' => ['groups*'],
-        ],
-        [
-            'text' => 'Miembros',
-            'url'  => 'members',
-            'icon' => 'fas fa-fw fa-user-friends',
-            'active' => ['members*'],
-        ],
-        [
-            'text' => 'Reuniones',
-            'url'  => 'meetings',
-            'icon' => 'fas fa-fw fa-calendar-alt',
-            'active' => ['meetings*'],
-        ],
 
-        ['header' => 'FINANZAS'],
         [
-            'text' => 'Préstamos',
-            'url'  => 'loans',
-            'icon' => 'fas fa-fw fa-hand-holding-usd',
-            'active' => ['loans*'],
+            'text'  => 'Grupos de Ahorro',
+            'route' => 'groups.index',
+            'icon'  => 'fas fa-fw fa-users-cog',
+            'can'   => 'admin',
         ],
         [
-            'text' => 'Multas',
-            'url'  => 'fines',
-            'icon' => 'fas fa-fw fa-gavel',
-            'active' => ['fines*'],
+            'text'  => 'Miembros',
+            'route' => 'members.index',
+            'icon'  => 'fas fa-fw fa-user-friends',
         ],
         [
-            'text' => 'Gastos Bancarios',
-            'url'  => 'bank-expenses',
-            'icon' => 'fas fa-fw fa-university',
-            'active' => ['bank-expenses*'],
+            'text'  => 'Reuniones',
+            'route' => 'meetings.index',
+            'icon'  => 'fas fa-fw fa-calendar-alt',
+        ],
+        [
+            'text'  => 'Préstamos',
+            'route' => 'loans.index',
+            'icon'  => 'fas fa-fw fa-hand-holding-usd',
+        ],
+        [
+            'text'  => 'Multas',
+            'route' => 'fines.index',
+            'icon'  => 'fas fa-fw fa-gavel',
+        ],
+        [
+            'text'  => 'Gastos Bancarios',
+            'route' => 'bank-expenses.index',
+            'icon'  => 'fas fa-fw fa-university',
         ],
 
         ['header' => 'REPORTES'],
+
         [
-            'text' => 'Reportes',
-            'url'  => 'reports',
-            'icon' => 'fas fa-fw fa-file-alt',
-            'active' => ['reports*'],
+            'text'  => 'Reportes',
+            'route' => 'reports.index',
+            'icon'  => 'fas fa-fw fa-chart-bar',
         ],
 
         ['header' => 'ADMINISTRACIÓN'],
+
         [
-            'text' => 'Usuarios',
-            'url'  => 'users',
-            'icon' => 'fas fa-fw fa-users',
-            'active' => ['users*'],
-            'can'  => 'admin',
+            'text'  => 'Usuarios',
+            'route' => 'users.index',
+            'icon'  => 'fas fa-fw fa-users',
+            'can'   => 'admin',
         ],
     ],
 
@@ -418,57 +405,57 @@ return [
 
     'plugins' => [
         'Datatables' => [
-            'active' => true,
+            'active' => false,
             'files' => [
                 [
                     'type' => 'js',
                     'asset' => false,
-                    'location' => '//cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js',
+                    'location' => '//cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js',
                 ],
                 [
                     'type' => 'js',
                     'asset' => false,
-                    'location' => '//cdn.datatables.net/1.13.4/js/dataTables.bootstrap4.min.js',
+                    'location' => '//cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js',
                 ],
                 [
                     'type' => 'css',
                     'asset' => false,
-                    'location' => '//cdn.datatables.net/1.13.4/css/dataTables.bootstrap4.min.css',
+                    'location' => '//cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css',
                 ],
             ],
         ],
         'Select2' => [
-            'active' => true,
+            'active' => false,
             'files' => [
                 [
                     'type' => 'js',
                     'asset' => false,
-                    'location' => '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js',
+                    'location' => '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js',
                 ],
                 [
                     'type' => 'css',
                     'asset' => false,
-                    'location' => '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css',
+                    'location' => '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.css',
                 ],
             ],
         ],
         'Chartjs' => [
-            'active' => true,
+            'active' => false,
             'files' => [
                 [
                     'type' => 'js',
                     'asset' => false,
-                    'location' => '//cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js',
+                    'location' => '//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.0/Chart.bundle.min.js',
                 ],
             ],
         ],
         'Sweetalert2' => [
-            'active' => true,
+            'active' => false,
             'files' => [
                 [
                     'type' => 'js',
                     'asset' => false,
-                    'location' => '//cdn.jsdelivr.net/npm/sweetalert2@11',
+                    'location' => '//cdn.jsdelivr.net/npm/sweetalert2@8',
                 ],
             ],
         ],
