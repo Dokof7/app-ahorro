@@ -16,11 +16,20 @@ class DashboardApiController extends Controller
 {
     public function index(Request $request)
     {
-        $user  = $request->user();
-        $query = $user->isAdmin() ? Group::query() : $user->groups();
+        $user     = $request->user();
+        $groupIds = $this->resolveGroupIds($user);
 
-        $groups   = $query->with(['members', 'meetings'])->get();
-        $groupIds = $groups->pluck('id');
+        if ($groupIds->isEmpty()) {
+            return response()->json([
+                'stats'  => $this->emptyStats(),
+                'chart'  => $this->emptyChart(),
+                'groups' => [],
+            ]);
+        }
+
+        $groups = Group::with(['members', 'meetings'])
+            ->whereIn('id', $groupIds)
+            ->get();
 
         $stats = [
             'total_groups'          => $groups->count(),
@@ -40,8 +49,6 @@ class DashboardApiController extends Controller
                                         ->sum('groups.membership_fee'),
         ];
 
-        $chartData = $this->chartData($groupIds);
-
         $groupList = $groups->map(fn($g) => [
             'id'          => $g->id,
             'name'        => $g->name,
@@ -52,22 +59,39 @@ class DashboardApiController extends Controller
         ]);
 
         return response()->json([
-            'stats'     => $stats,
-            'chart'     => $chartData,
-            'groups'    => $groupList,
+            'stats'  => $stats,
+            'chart'  => $this->chartData($groupIds),
+            'groups' => $groupList,
         ]);
+    }
+
+    private function resolveGroupIds($user)
+    {
+        // Admin ve todo
+        if ($user->isAdmin()) {
+            return Group::pluck('id');
+        }
+
+        // Miembro: su grupo viene de members.user_id
+        if ($user->isMiembro()) {
+            $member = Member::where('user_id', $user->id)->first();
+            return $member ? collect([$member->group_id]) : collect();
+        }
+
+        // Tesorero, secretario, observador: grupos asignados via group_user
+        return $user->groups()->pluck('groups.id');
     }
 
     private function chartData($groupIds): array
     {
-        $months  = collect(range(5, 0))->map(fn($i) => now()->subMonths($i)->format('Y-m'));
-        $labels  = [];
-        $savings = [];
+        $months    = collect(range(5, 0))->map(fn($i) => now()->subMonths($i)->format('Y-m'));
+        $labels    = [];
+        $savings   = [];
         $emergency = [];
 
         foreach ($months as $month) {
             [$year, $m] = explode('-', $month);
-            $labels[]    = Carbon::createFromDate($year, $m, 1)->format('M Y');
+            $labels[] = Carbon::createFromDate($year, $m, 1)->format('M Y');
 
             $base = MeetingContribution::whereHas('meeting', fn($q) =>
                 $q->whereIn('group_id', $groupIds)
@@ -80,5 +104,25 @@ class DashboardApiController extends Controller
         }
 
         return compact('labels', 'savings', 'emergency');
+    }
+
+    private function emptyStats(): array
+    {
+        return [
+            'total_groups' => 0, 'total_members' => 0, 'total_meetings' => 0,
+            'total_savings' => 0, 'total_emergency' => 0, 'total_fines' => 0,
+            'loans_pending' => 0, 'loans_paid' => 0, 'loans_overdue' => 0,
+            'loans_overdue_balance' => 0, 'bank_expenses' => 0, 'total_membership' => 0,
+        ];
+    }
+
+    private function emptyChart(): array
+    {
+        $labels = collect(range(5, 0))
+            ->map(fn($i) => now()->subMonths($i)->format('M Y'))
+            ->values()
+            ->all();
+
+        return ['labels' => $labels, 'savings' => array_fill(0, 6, 0), 'emergency' => array_fill(0, 6, 0)];
     }
 }
