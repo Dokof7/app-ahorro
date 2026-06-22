@@ -86,13 +86,13 @@ class DashboardController extends Controller
 
         $rows = MeetingContribution::whereIn('meeting_id', $lastMeetingIds)
             ->join('members', 'meeting_contributions.member_id', '=', 'members.id')
-            ->select('members.name', DB::raw('SUM(meeting_contributions.shares) as total_shares'))
-            ->groupBy('members.id', 'members.name')
+            ->select('members.full_name', DB::raw('SUM(meeting_contributions.shares) as total_shares'))
+            ->groupBy('members.id', 'members.full_name')
             ->orderByDesc('total_shares')
             ->get();
 
         return [
-            'labels' => $rows->pluck('name')->toArray(),
+            'labels' => $rows->pluck('full_name')->toArray(),
             'data'   => $rows->pluck('total_shares')->map(fn($v) => (float) $v)->toArray(),
         ];
     }
