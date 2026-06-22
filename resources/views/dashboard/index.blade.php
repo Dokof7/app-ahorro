@@ -236,7 +236,7 @@ const legend = document.getElementById('sharesLegend');
 sharesLabels.forEach(function(name, i) {
     legend.innerHTML += `<li class="mb-1">
         <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${sharesColors[i]};margin-right:5px;"></span>
-        ${name}: <strong>Bs. ${parseFloat(sharesData[i]).toFixed(2)}</strong>
+        ${name}
     </li>`;
 });
 </script>
