@@ -9,6 +9,7 @@ use App\Models\Meeting;
 use App\Models\Loan;
 use App\Models\MeetingContribution;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -48,37 +49,51 @@ class DashboardController extends Controller
                                         ->sum('groups.membership_fee'),
         ];
 
-        $chartData = $this->getChartData($groupIds);
+        $chartData   = $this->getChartData($groupIds);
+        $sharesChart = $this->getSharesChart($groupIds);
 
-        return view('dashboard.index', compact('stats', 'chartData', 'groups'));
+        return view('dashboard.index', compact('stats', 'chartData', 'sharesChart', 'groups'));
     }
 
     private function getChartData($groupIds)
     {
-        $months = collect(range(5, 0))->map(fn($i) => now()->subMonths($i)->format('Y-m'));
+        $meetings = Meeting::whereIn('group_id', $groupIds)
+            ->orderByDesc('meeting_date')
+            ->limit(4)
+            ->get(['id', 'meeting_number', 'meeting_date'])
+            ->reverse()
+            ->values();
 
-        $savingsByMonth = [];
-        $emergencyByMonth = [];
-        $labels = [];
+        $labels   = [];
+        $savings  = [];
+        $emergency = [];
 
-        foreach ($months as $month) {
-            [$year, $m] = explode('-', $month);
-            $labels[] = \Carbon\Carbon::createFromDate($year, $m, 1)->translatedFormat('M Y');
-
-            $contributions = MeetingContribution::whereHas('meeting', function ($q) use ($groupIds, $year, $m) {
-                $q->whereIn('group_id', $groupIds)
-                  ->whereYear('meeting_date', $year)
-                  ->whereMonth('meeting_date', $m);
-            });
-
-            $savingsByMonth[] = $contributions->sum('savings');
-            $emergencyByMonth[] = $contributions->sum('emergency_fund');
+        foreach ($meetings as $meeting) {
+            $labels[]    = 'Reunión ' . $meeting->meeting_number . ' (' . \Carbon\Carbon::parse($meeting->meeting_date)->format('d/m/Y') . ')';
+            $savings[]   = (float) MeetingContribution::where('meeting_id', $meeting->id)->sum('savings');
+            $emergency[] = (float) MeetingContribution::where('meeting_id', $meeting->id)->sum('emergency_fund');
         }
 
+        return compact('labels', 'savings', 'emergency');
+    }
+
+    private function getSharesChart($groupIds)
+    {
+        $lastMeetingIds = Meeting::whereIn('group_id', $groupIds)
+            ->orderByDesc('meeting_date')
+            ->limit(4)
+            ->pluck('id');
+
+        $rows = MeetingContribution::whereIn('meeting_id', $lastMeetingIds)
+            ->join('members', 'meeting_contributions.member_id', '=', 'members.id')
+            ->select('members.name', DB::raw('SUM(meeting_contributions.shares) as total_shares'))
+            ->groupBy('members.id', 'members.name')
+            ->orderByDesc('total_shares')
+            ->get();
+
         return [
-            'labels'    => $labels,
-            'savings'   => $savingsByMonth,
-            'emergency' => $emergencyByMonth,
+            'labels' => $rows->pluck('name')->toArray(),
+            'data'   => $rows->pluck('total_shares')->map(fn($v) => (float) $v)->toArray(),
         ];
     }
 }

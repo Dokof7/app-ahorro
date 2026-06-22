@@ -112,14 +112,14 @@
 <div class="row">
     <div class="col-md-8">
         <div class="card card-success">
-            <div class="card-header"><h3 class="card-title"><i class="fas fa-chart-line mr-2"></i>Ahorros y Fondo de Emergencia (últimos 6 meses)</h3></div>
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-chart-line mr-2"></i>Ahorros y Fondo de Emergencia (últimas 4 reuniones)</h3></div>
             <div class="card-body"><canvas id="savingsChart" height="120"></canvas></div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="card card-primary">
-            <div class="card-header"><h3 class="card-title"><i class="fas fa-chart-pie mr-2"></i>Estado de Préstamos</h3></div>
-            <div class="card-body"><canvas id="loansChart" height="200"></canvas></div>
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-chart-pie mr-2"></i>Acciones por miembro (últimas 4 reuniones)</h3></div>
+            <div class="card-body"><canvas id="sharesChart" height="200"></canvas></div>
         </div>
     </div>
 </div>
@@ -192,14 +192,35 @@ new Chart(ctxSavings, {
     options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
 });
 
-const ctxLoans = document.getElementById('loansChart').getContext('2d');
-new Chart(ctxLoans, {
+const sharesLabels = {!! json_encode($sharesChart['labels']) !!};
+const sharesData   = {!! json_encode($sharesChart['data']) !!};
+
+const palette = [
+    '#28a745','#17a2b8','#ffc107','#dc3545','#6f42c1','#fd7e14',
+    '#20c997','#e83e8c','#007bff','#6c757d','#343a40','#f8f9fa'
+];
+
+const ctxShares = document.getElementById('sharesChart').getContext('2d');
+new Chart(ctxShares, {
     type: 'doughnut',
     data: {
-        labels: ['Pendientes', 'Pagados', 'Vencidos'],
-        datasets: [{ data: [{{ $stats['loans_pending'] }}, {{ $stats['loans_paid'] }}, {{ $stats['loans_overdue_balance'] }}], backgroundColor: ['#ffc107', '#28a745', '#dc3545'] }]
+        labels: sharesLabels,
+        datasets: [{
+            data: sharesData,
+            backgroundColor: sharesLabels.map((_, i) => palette[i % palette.length])
+        }]
     },
-    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'bottom' },
+            tooltip: {
+                callbacks: {
+                    label: ctx => ` ${ctx.label}: Bs. ${ctx.parsed.toFixed(2)}`
+                }
+            }
+        }
+    }
 });
 </script>
 @endpush
