@@ -25,14 +25,6 @@
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label>N° de Reunión <span class="text-danger">*</span></label>
-                                <input type="number" name="meeting_number" class="form-control @error('meeting_number') is-invalid @enderror"
-                                    value="{{ old('meeting_number') }}" min="1" required>
-                                @error('meeting_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
                                 <label>Estado</label>
                                 <select name="status" class="form-control">
                                     <option value="open">Abierta</option>
