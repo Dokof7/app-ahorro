@@ -20,7 +20,12 @@ class DashboardController extends Controller
             return redirect()->route('portal.contributions');
         }
 
-        $query = $user->isAdmin() ? Group::query() : $user->groups();
+        if ($user->isAdmin()) {
+            $activeGroupId = session('active_group_id');
+            $query = Group::where('id', $activeGroupId);
+        } else {
+            $query = $user->groups();
+        }
 
         $groups = $query->with(['members', 'meetings'])->get();
         $groupIds = $groups->pluck('id');

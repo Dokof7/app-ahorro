@@ -1,5 +1,24 @@
 @extends('adminlte::page')
 
+@can('admin')
+@section('navbar_custom_menu_left')
+    @if(session('active_group_id'))
+    <li class="nav-item d-flex align-items-center mr-3">
+        <span class="badge badge-success px-3 py-2" style="font-size:0.85rem;">
+            <i class="fas fa-users-cog mr-1"></i>
+            {{ session('active_group_name') }}
+        </span>
+        <form action="{{ route('group.selector.clear') }}" method="POST" class="ml-2 d-inline">
+            @csrf
+            <button type="submit" class="btn btn-sm btn-outline-warning" title="Cambiar grupo">
+                <i class="fas fa-exchange-alt"></i> Cambiar
+            </button>
+        </form>
+    </li>
+    @endif
+@endsection
+@endcan
+
 @section('title', config('adminlte.title'))
 
 @section('content_header')

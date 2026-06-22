@@ -13,6 +13,7 @@ use App\Http\Controllers\FineController;
 use App\Http\Controllers\BankExpenseController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\GroupSelectorController;
 use App\Http\Controllers\MemberPortalController;
 
 Route::get('/', function () {
@@ -23,29 +24,34 @@ Auth::routes();
 
 Route::middleware('auth')->group(function () {
 
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/home', [DashboardController::class, 'index'])->name('home');
+    // Group selector – admin only, no group required
+    Route::get('group-selector',        [GroupSelectorController::class, 'index'])->name('group.selector')->middleware('admin');
+    Route::get('group-selector/search', [GroupSelectorController::class, 'search'])->name('group.selector.search')->middleware('admin');
+    Route::post('group-selector/select',[GroupSelectorController::class, 'select'])->name('group.selector.select')->middleware('admin');
+    Route::post('group-selector/clear', [GroupSelectorController::class, 'clear'])->name('group.selector.clear')->middleware('admin');
 
-    // READ routes – all authenticated roles
-    Route::get('members/register',     [MemberController::class,  'create'])->name('members.create')->middleware('role:admin,admin_grupo,tesorero,secretario');
-    Route::get('members/search-users', [MemberController::class,  'searchUsers'])->name('members.search-users')->middleware('role:admin,admin_grupo,tesorero,secretario');
-    Route::resource('members',         MemberController::class)->only(['index', 'show']);
-    Route::get('meetings/new',         [MeetingController::class, 'create'])->name('meetings.create')->middleware('role:admin,admin_grupo,tesorero,secretario');
-    Route::resource('meetings',        MeetingController::class)->only(['index', 'show']);
-    Route::resource('loans', LoanController::class)->only(['index', 'show'])
-        ->where(['loan' => '[0-9]+']);
-    Route::get('loans/members/{groupId}',  [LoanController::class, 'getMembersByGroup'])->name('loans.members');
-    Route::get('loans/meetings/{groupId}', [LoanController::class, 'getMeetingsByGroup'])->name('loans.meetings');
-    Route::get('fines/members/{groupId}',  [FineController::class, 'getMembersByGroup'])->name('fines.members');
-    Route::get('fines/meetings/{groupId}', [FineController::class, 'getMeetingsByGroup'])->name('fines.meetings');
-    Route::get('bank-expenses/meetings/{groupId}', [BankExpenseController::class, 'getMeetingsByGroup'])->name('bank-expenses.meetings');
-    Route::resource('fines', FineController::class)->only(['index']);
-    Route::resource('bank-expenses', BankExpenseController::class)->only(['index']);
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard')->middleware('group.selected');
+    Route::get('/home', [DashboardController::class, 'index'])->name('home')->middleware('group.selected');
 
-    // Reports – all roles (observador can generate/print)
-    Route::get('reports',                          [ReportController::class, 'index'])->name('reports.index');
-    Route::post('reports/generate',               [ReportController::class, 'generate'])->name('reports.generate');
-    Route::get('reports/members/{group}',         [ReportController::class, 'membersByGroup'])->name('reports.members');
+    // READ routes – all authenticated roles (admin requires group selected)
+    Route::middleware('group.selected')->group(function () {
+        Route::get('members/register',     [MemberController::class,  'create'])->name('members.create')->middleware('role:admin,admin_grupo,tesorero,secretario');
+        Route::get('members/search-users', [MemberController::class,  'searchUsers'])->name('members.search-users')->middleware('role:admin,admin_grupo,tesorero,secretario');
+        Route::resource('members',         MemberController::class)->only(['index', 'show']);
+        Route::get('meetings/new',         [MeetingController::class, 'create'])->name('meetings.create')->middleware('role:admin,admin_grupo,tesorero,secretario');
+        Route::resource('meetings',        MeetingController::class)->only(['index', 'show']);
+        Route::resource('loans',           LoanController::class)->only(['index', 'show'])->where(['loan' => '[0-9]+']);
+        Route::get('loans/members/{groupId}',         [LoanController::class,       'getMembersByGroup'])->name('loans.members');
+        Route::get('loans/meetings/{groupId}',        [LoanController::class,       'getMeetingsByGroup'])->name('loans.meetings');
+        Route::get('fines/members/{groupId}',         [FineController::class,       'getMembersByGroup'])->name('fines.members');
+        Route::get('fines/meetings/{groupId}',        [FineController::class,       'getMeetingsByGroup'])->name('fines.meetings');
+        Route::get('bank-expenses/meetings/{groupId}',[BankExpenseController::class,'getMeetingsByGroup'])->name('bank-expenses.meetings');
+        Route::resource('fines',         FineController::class)->only(['index']);
+        Route::resource('bank-expenses', BankExpenseController::class)->only(['index']);
+        Route::get('reports',             [ReportController::class, 'index'])->name('reports.index');
+        Route::post('reports/generate',   [ReportController::class, 'generate'])->name('reports.generate');
+        Route::get('reports/members/{group}', [ReportController::class, 'membersByGroup'])->name('reports.members');
+    });
 
     // Groups – admin only
     Route::middleware('admin')->group(function () {
