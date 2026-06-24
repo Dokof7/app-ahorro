@@ -135,25 +135,27 @@ function loadScheduledDates(groupId) {
             const today = new Date(); today.setHours(0,0,0,0);
             const dateStr = dateObj.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-            let rowClass = '', badge = '', canDelete = true;
+            let rowStyle = '', badge = '', canDelete = true;
             if (d.used) {
-                rowClass = 'list-group-item-secondary';
+                rowStyle = 'background:#e2e3e5;';
                 badge = '<span class="badge badge-secondary ml-1"><i class="fas fa-check mr-1"></i>Realizada</span>';
                 canDelete = false;
             } else if (dateObj.getTime() === today.getTime()) {
-                rowClass = 'list-group-item-success';
+                rowStyle = 'background:#d4edda; border-left:4px solid #28a745;';
                 badge = '<span class="badge badge-success ml-1"><i class="fas fa-calendar-day mr-1"></i>Hoy</span>';
                 canDelete = false;
             } else if (dateObj < today) {
-                rowClass = 'list-group-item-warning';
+                rowStyle = 'background:#fff3cd; border-left:4px solid #ffc107;';
                 badge = '<span class="badge badge-warning ml-1 text-dark"><i class="fas fa-exclamation-triangle mr-1"></i>Vencida</span>';
+            } else {
+                rowStyle = 'border-left:4px solid #007bff;';
             }
 
             const deleteBtn = (canDelete && canEdit) ? `<button class="btn btn-xs btn-outline-danger btn-remove-date" data-id="${d.id}" title="Eliminar"><i class="fas fa-times"></i></button>` : '';
-            const usedStyle = d.used ? 'style="text-decoration:line-through; opacity:.6"' : '';
+            const textStyle = d.used ? 'text-decoration:line-through; opacity:.6' : '';
 
-            html += `<li class="list-group-item d-flex justify-content-between align-items-center py-1 px-2 ${rowClass}">
-                <span ${usedStyle}>${dateStr}${badge}${d.notes ? '<br><small class="text-muted">' + d.notes + '</small>' : ''}</span>
+            html += `<li class="list-group-item d-flex justify-content-between align-items-center py-1 px-2" style="${rowStyle}">
+                <span style="${textStyle}">${dateStr}${badge}${d.notes ? '<br><small class="text-muted">' + d.notes + '</small>' : ''}</span>
                 ${deleteBtn}
             </li>`;
         });
