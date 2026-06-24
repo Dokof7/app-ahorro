@@ -9,20 +9,37 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Only these 4 FKs exist in production pointing at meetings.id.
-        // meeting_contributions, attendances and loans have no FK in this DB.
-        Schema::table('bank_expenses',     fn($t) => $t->dropForeign(['meeting_id']));
-        Schema::table('fines',             fn($t) => $t->dropForeign(['meeting_id']));
-        Schema::table('general_summaries', fn($t) => $t->dropForeign(['meeting_id']));
-        Schema::table('loan_payments',     fn($t) => $t->dropForeign(['meeting_id']));
+        // The unique index (group_id, meeting_number) is the backing index for
+        // meetings_group_id_foreign (meetings.group_id → groups.id).
+        // MySQL refuses to drop the unique while that FK exists, so we drop it first.
+        // The other 4 FKs (bank_expenses, fines, general_summaries, loan_payments)
+        // were already dropped by a previous failed run, so we guard with IF EXISTS.
+        DB::statement('ALTER TABLE meetings DROP FOREIGN KEY meetings_group_id_foreign');
 
         Schema::table('meetings', fn($t) => $t->dropUnique(['group_id', 'meeting_number']));
 
-        // Restore FKs (now backed by PK, not the unique index).
-        Schema::table('bank_expenses',     fn($t) => $t->foreign('meeting_id')->references('id')->on('meetings')->onDelete('cascade'));
-        Schema::table('fines',             fn($t) => $t->foreign('meeting_id')->references('id')->on('meetings')->onDelete('cascade'));
-        Schema::table('general_summaries', fn($t) => $t->foreign('meeting_id')->references('id')->on('meetings')->onDelete('cascade'));
-        Schema::table('loan_payments',     fn($t) => $t->foreign('meeting_id')->references('id')->on('meetings')->onDelete('set null'));
+        // Restore meetings.group_id FK (now backed by the PK-adjacent index).
+        Schema::table('meetings', fn($t) =>
+            $t->foreign('group_id')->references('id')->on('groups')->onDelete('cascade')
+        );
+
+        // Re-add the 4 child FKs only if they were lost in previous failed runs.
+        $existing = collect(DB::select(
+            'SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = DATABASE() AND CONSTRAINT_TYPE = "FOREIGN KEY" AND TABLE_NAME IN ("bank_expenses","fines","general_summaries","loan_payments")'
+        ))->pluck('CONSTRAINT_NAME');
+
+        if (!$existing->contains('bank_expenses_meeting_id_foreign')) {
+            Schema::table('bank_expenses', fn($t) => $t->foreign('meeting_id')->references('id')->on('meetings')->onDelete('cascade'));
+        }
+        if (!$existing->contains('fines_meeting_id_foreign')) {
+            Schema::table('fines', fn($t) => $t->foreign('meeting_id')->references('id')->on('meetings')->onDelete('cascade'));
+        }
+        if (!$existing->contains('general_summaries_meeting_id_foreign')) {
+            Schema::table('general_summaries', fn($t) => $t->foreign('meeting_id')->references('id')->on('meetings')->onDelete('cascade'));
+        }
+        if (!$existing->contains('loan_payments_meeting_id_foreign')) {
+            Schema::table('loan_payments', fn($t) => $t->foreign('meeting_id')->references('id')->on('meetings')->onDelete('set null'));
+        }
 
         // MySQL treats NULLs as distinct in unique indexes, so active rows
         // (deleted_at IS NULL) enforce uniqueness while soft-deleted rows don't collide.
