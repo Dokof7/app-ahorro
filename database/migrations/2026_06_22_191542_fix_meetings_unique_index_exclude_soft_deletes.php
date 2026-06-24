@@ -9,8 +9,19 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // MySQL blocks dropping a unique index when a FK uses it as its backing index.
+        // We drop the FK on loans.meeting_id first, then remove the unique, then restore the FK.
+        Schema::table('loans', function (Blueprint $table) {
+            $table->dropForeign(['meeting_id']);
+        });
+
         Schema::table('meetings', function (Blueprint $table) {
             $table->dropUnique(['group_id', 'meeting_number']);
+        });
+
+        // Restore the FK now that the unique index is gone (MySQL will use the PK to back it).
+        Schema::table('loans', function (Blueprint $table) {
+            $table->foreign('meeting_id')->references('id')->on('meetings')->onDelete('cascade');
         });
 
         // MySQL treats NULLs as distinct in unique indexes, so active rows
