@@ -130,13 +130,30 @@ function loadScheduledDates(groupId) {
         let html = '<ul class="list-group list-group-flush">';
         dates.forEach(function(d) {
             const raw = typeof d.scheduled_date === 'string' ? d.scheduled_date.substring(0, 10) : d.scheduled_date;
-            const dateStr = new Date(raw + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            const used = d.used ? '<span class="badge badge-secondary ml-1">Usada</span>' : '';
-            html += `<li class="list-group-item d-flex justify-content-between align-items-center py-1 px-2">
-                <span>${dateStr}${used}${d.notes ? '<br><small class="text-muted">' + d.notes + '</small>' : ''}</span>
-                @can('canEdit')
-                <button class="btn btn-xs btn-outline-danger btn-remove-date" data-id="${d.id}" title="Eliminar"><i class="fas fa-times"></i></button>
-                @endcan
+            const dateObj = new Date(raw + 'T00:00:00');
+            const today = new Date(); today.setHours(0,0,0,0);
+            const dateStr = dateObj.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+            let rowClass = '', badge = '', canDelete = true;
+            if (d.used) {
+                rowClass = 'list-group-item-secondary';
+                badge = '<span class="badge badge-secondary ml-1"><i class="fas fa-check mr-1"></i>Realizada</span>';
+                canDelete = false;
+            } else if (dateObj.getTime() === today.getTime()) {
+                rowClass = 'list-group-item-success';
+                badge = '<span class="badge badge-success ml-1"><i class="fas fa-calendar-day mr-1"></i>Hoy</span>';
+                canDelete = false;
+            } else if (dateObj < today) {
+                rowClass = 'list-group-item-warning';
+                badge = '<span class="badge badge-warning ml-1 text-dark"><i class="fas fa-exclamation-triangle mr-1"></i>Vencida</span>';
+            }
+
+            const deleteBtn = (canDelete) ? `@can('canEdit')<button class="btn btn-xs btn-outline-danger btn-remove-date" data-id="${d.id}" title="Eliminar"><i class="fas fa-times"></i></button>@endcan` : '';
+            const usedStyle = d.used ? 'style="text-decoration:line-through; opacity:.6"' : '';
+
+            html += `<li class="list-group-item d-flex justify-content-between align-items-center py-1 px-2 ${rowClass}">
+                <span ${usedStyle}>${dateStr}${badge}${d.notes ? '<br><small class="text-muted">' + d.notes + '</small>' : ''}</span>
+                ${deleteBtn}
             </li>`;
         });
         html += '</ul>';

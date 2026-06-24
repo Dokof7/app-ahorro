@@ -87,10 +87,17 @@
                     </thead>
                     <tbody>
                         @foreach($meeting->contributions as $i => $contribution)
+                        @php
+                            $att = $meeting->attendances->firstWhere('member_id', $contribution->member_id);
+                            $isAbsent = $att && !$att->attended && !$att->excused_absence;
+                        @endphp
                         <input type="hidden" name="contributions[{{ $i }}][id]" value="{{ $contribution->id }}">
-                        <tr>
+                        <tr class="{{ $isAbsent ? 'table-danger' : '' }}">
                             <td>{{ $i + 1 }}</td>
-                            <td><strong>{{ $contribution->member->full_name }}</strong></td>
+                            <td>
+                                <strong>{{ $contribution->member->full_name }}</strong>
+                                @if($isAbsent)<span class="badge badge-danger ml-1"><i class="fas fa-times-circle mr-1"></i>Falta</span>@endif
+                            </td>
                             <td>
                                 <input type="number" min="0" max="25" name="contributions[{{ $i }}][shares]"
                                     value="{{ $contribution->shares ?? 0 }}"
@@ -127,8 +134,16 @@
                 <thead class="thead-dark"><tr><th>N°</th><th>Nombre del Miembro</th><th>Acciones</th><th>Ahorro (Bs.)</th><th>Fondo Emergencia</th><th>Multa</th><th>Total</th><th>Confirmado</th></tr></thead>
                 <tbody>
                     @foreach($meeting->contributions as $i => $contribution)
-                    <tr>
-                        <td>{{ $i + 1 }}</td><td>{{ $contribution->member->full_name }}</td>
+                    @php
+                        $att = $meeting->attendances->firstWhere('member_id', $contribution->member_id);
+                        $isAbsent = $att && !$att->attended && !$att->excused_absence;
+                    @endphp
+                    <tr class="{{ $isAbsent ? 'table-danger' : '' }}">
+                        <td>{{ $i + 1 }}</td>
+                        <td>
+                            {{ $contribution->member->full_name }}
+                            @if($isAbsent)<span class="badge badge-danger ml-1">Falta</span>@endif
+                        </td>
                         <td class="text-center"><span class="badge bg-primary">{{ $contribution->shares ?? 0 }} acc.</span></td>
                         <td>Bs. {{ number_format($contribution->savings, 2) }}</td>
                         <td>Bs. {{ number_format($contribution->emergency_fund, 2) }}</td>
