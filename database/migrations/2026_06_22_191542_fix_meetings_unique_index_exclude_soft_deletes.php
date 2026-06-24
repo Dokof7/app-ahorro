@@ -7,38 +7,22 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    // All tables that have a FK pointing at meetings.id.
-    // MySQL uses the unique index as the backing index for any of these,
-    // so every FK must be dropped before the unique index can be removed.
-    private array $fkTables = [
-        'meeting_contributions',
-        'attendances',
-        'loans',
-        'loan_payments',
-        'fines',
-        'bank_expenses',
-        'general_summaries',
-    ];
-
     public function up(): void
     {
-        foreach ($this->fkTables as $t) {
-            Schema::table($t, function (Blueprint $table) {
-                $table->dropForeign(['meeting_id']);
-            });
-        }
+        // Only these 4 FKs exist in production pointing at meetings.id.
+        // meeting_contributions, attendances and loans have no FK in this DB.
+        Schema::table('bank_expenses',     fn($t) => $t->dropForeign(['meeting_id']));
+        Schema::table('fines',             fn($t) => $t->dropForeign(['meeting_id']));
+        Schema::table('general_summaries', fn($t) => $t->dropForeign(['meeting_id']));
+        Schema::table('loan_payments',     fn($t) => $t->dropForeign(['meeting_id']));
 
-        Schema::table('meetings', function (Blueprint $table) {
-            $table->dropUnique(['group_id', 'meeting_number']);
-        });
+        Schema::table('meetings', fn($t) => $t->dropUnique(['group_id', 'meeting_number']));
 
-        // Restore all FKs (now backed by the PK, not the unique index).
-        foreach ($this->fkTables as $t) {
-            $onDelete = $t === 'loan_payments' ? 'set null' : 'cascade';
-            Schema::table($t, function (Blueprint $table) use ($onDelete) {
-                $table->foreign('meeting_id')->references('id')->on('meetings')->onDelete($onDelete);
-            });
-        }
+        // Restore FKs (now backed by PK, not the unique index).
+        Schema::table('bank_expenses',     fn($t) => $t->foreign('meeting_id')->references('id')->on('meetings')->onDelete('cascade'));
+        Schema::table('fines',             fn($t) => $t->foreign('meeting_id')->references('id')->on('meetings')->onDelete('cascade'));
+        Schema::table('general_summaries', fn($t) => $t->foreign('meeting_id')->references('id')->on('meetings')->onDelete('cascade'));
+        Schema::table('loan_payments',     fn($t) => $t->foreign('meeting_id')->references('id')->on('meetings')->onDelete('set null'));
 
         // MySQL treats NULLs as distinct in unique indexes, so active rows
         // (deleted_at IS NULL) enforce uniqueness while soft-deleted rows don't collide.
@@ -49,8 +33,6 @@ return new class extends Migration
     {
         DB::statement('ALTER TABLE meetings DROP INDEX meetings_group_meeting_active_unique');
 
-        Schema::table('meetings', function (Blueprint $table) {
-            $table->unique(['group_id', 'meeting_number']);
-        });
+        Schema::table('meetings', fn($t) => $t->unique(['group_id', 'meeting_number']));
     }
 };
