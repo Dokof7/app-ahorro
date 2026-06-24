@@ -108,6 +108,7 @@ $('#filterGroup, #filterStatus').on('change', function() { table.ajax.reload(); 
 
 // Scheduled dates
 const csrfToken = '{{ csrf_token() }}';
+const canEdit = {{ auth()->user()->canEdit() ? 'true' : 'false' }};
 let currentGroupId = null;
 
 $('#scheduleGroup').on('change', function() {
@@ -148,7 +149,7 @@ function loadScheduledDates(groupId) {
                 badge = '<span class="badge badge-warning ml-1 text-dark"><i class="fas fa-exclamation-triangle mr-1"></i>Vencida</span>';
             }
 
-            const deleteBtn = (canDelete) ? `@can('canEdit')<button class="btn btn-xs btn-outline-danger btn-remove-date" data-id="${d.id}" title="Eliminar"><i class="fas fa-times"></i></button>@endcan` : '';
+            const deleteBtn = (canDelete && canEdit) ? `<button class="btn btn-xs btn-outline-danger btn-remove-date" data-id="${d.id}" title="Eliminar"><i class="fas fa-times"></i></button>` : '';
             const usedStyle = d.used ? 'style="text-decoration:line-through; opacity:.6"' : '';
 
             html += `<li class="list-group-item d-flex justify-content-between align-items-center py-1 px-2 ${rowClass}">
