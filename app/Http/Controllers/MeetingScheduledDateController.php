@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\MeetingScheduledDate;
-use App\Models\Group;
 use Illuminate\Http\Request;
 
 class MeetingScheduledDateController extends Controller
@@ -14,7 +13,13 @@ class MeetingScheduledDateController extends Controller
 
         $dates = MeetingScheduledDate::where('group_id', $groupId)
             ->orderBy('scheduled_date')
-            ->get(['id', 'scheduled_date', 'notes', 'used']);
+            ->get(['id', 'scheduled_date', 'notes', 'used'])
+            ->map(fn($d) => [
+                'id'             => $d->id,
+                'scheduled_date' => $d->scheduled_date->format('Y-m-d'),
+                'notes'          => $d->notes,
+                'used'           => $d->used,
+            ]);
 
         return response()->json($dates);
     }

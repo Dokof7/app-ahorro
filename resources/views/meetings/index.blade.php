@@ -129,7 +129,8 @@ function loadScheduledDates(groupId) {
         }
         let html = '<ul class="list-group list-group-flush">';
         dates.forEach(function(d) {
-            const dateStr = new Date(d.scheduled_date + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const raw = typeof d.scheduled_date === 'string' ? d.scheduled_date.substring(0, 10) : d.scheduled_date;
+            const dateStr = new Date(raw + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
             const used = d.used ? '<span class="badge badge-secondary ml-1">Usada</span>' : '';
             html += `<li class="list-group-item d-flex justify-content-between align-items-center py-1 px-2">
                 <span>${dateStr}${used}${d.notes ? '<br><small class="text-muted">' + d.notes + '</small>' : ''}</span>
