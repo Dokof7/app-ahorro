@@ -93,7 +93,7 @@
                             <td><strong>{{ $contribution->member->full_name }}</strong></td>
                             <td>
                                 <input type="number" min="0" max="25" name="contributions[{{ $i }}][shares]"
-                                    value="{{ $contribution->shares ?? 1 }}"
+                                    value="{{ $contribution->shares ?? 0 }}"
                                     class="form-control form-control-sm contribution-input" style="width:75px"
                                     data-row="{{ $i }}" data-field="shares">
                             </td>
@@ -129,7 +129,7 @@
                     @foreach($meeting->contributions as $i => $contribution)
                     <tr>
                         <td>{{ $i + 1 }}</td><td>{{ $contribution->member->full_name }}</td>
-                        <td class="text-center"><span class="badge bg-primary">{{ $contribution->shares ?? 1 }} acc.</span></td>
+                        <td class="text-center"><span class="badge bg-primary">{{ $contribution->shares ?? 0 }} acc.</span></td>
                         <td>Bs. {{ number_format($contribution->savings, 2) }}</td>
                         <td>Bs. {{ number_format($contribution->emergency_fund, 2) }}</td>
                         <td>Bs. {{ number_format($contribution->fine, 2) }}</td>
@@ -291,7 +291,7 @@
                                     @endif
                                 </td>
                                 <td class="text-center">
-                                    <span class="badge bg-primary">{{ $c->shares ?? 1 }}</span>
+                                    <span class="badge bg-primary">{{ $c->shares ?? 0 }}</span>
                                 </td>
                                 <td class="text-right">{{ number_format($c->savings, 2) }}</td>
                                 <td class="text-right">{{ number_format($c->emergency_fund, 2) }}</td>
@@ -476,7 +476,8 @@ const SHARE_VALUE = {{ $meeting->group->share_value ?? 10 }};
 
 $(document).on('input', '.contribution-input', function() {
     const row = $(this).data('row');
-    const shares   = parseInt($(`input[name="contributions[${row}][shares]"]`).val()) || 1;
+    const sharesRaw = $(`input[name="contributions[${row}][shares]"]`).val();
+    const shares   = sharesRaw === '' ? 0 : (parseInt(sharesRaw) || 0);
     const savings  = shares * SHARE_VALUE;
     const emergency = parseFloat($(`input[name="contributions[${row}][emergency_fund]"]`).val()) || 0;
     const fine      = parseFloat($(`input[name="contributions[${row}][fine]"]`).val()) || 0;

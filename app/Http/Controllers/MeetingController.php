@@ -7,6 +7,7 @@ use App\Models\Group;
 use App\Models\Member;
 use App\Models\MeetingContribution;
 use App\Models\Attendance;
+use App\Models\MeetingScheduledDate;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 
@@ -26,6 +27,7 @@ class MeetingController extends Controller
             if ($request->status)   $query->where('status', $request->status);
 
             return DataTables::of($query)
+                ->addColumn('meeting_date', fn($m) => $m->meeting_date->format('d/m/Y'))
                 ->addColumn('status_badge', fn($m) => $m->status === 'open'
                     ? '<span class="badge bg-success">Abierta</span>'
                     : '<span class="badge bg-secondary">Cerrada</span>')
@@ -74,6 +76,11 @@ class MeetingController extends Controller
         $data['meeting_number'] = Meeting::where('group_id', $data['group_id'])->max('meeting_number') + 1;
 
         $meeting = Meeting::create($data);
+
+        // Mark the scheduled date as used if it matches
+        MeetingScheduledDate::where('group_id', $data['group_id'])
+            ->where('scheduled_date', $data['meeting_date'])
+            ->update(['used' => true]);
 
         $members = Member::where('group_id', $data['group_id'])->where('status', 'active')->get();
 

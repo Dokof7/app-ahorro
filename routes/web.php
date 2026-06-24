@@ -15,6 +15,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\GroupSelectorController;
 use App\Http\Controllers\MemberPortalController;
+use App\Http\Controllers\MeetingScheduledDateController;
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
@@ -51,6 +52,10 @@ Route::middleware('auth')->group(function () {
         Route::get('reports',             [ReportController::class, 'index'])->name('reports.index');
         Route::post('reports/generate',   [ReportController::class, 'generate'])->name('reports.generate');
         Route::get('reports/members/{group}', [ReportController::class, 'membersByGroup'])->name('reports.members');
+
+        // Meeting scheduled dates (read)
+        Route::get('meeting-scheduled-dates',       [MeetingScheduledDateController::class, 'index'])->name('meeting-scheduled-dates.index');
+        Route::get('meeting-scheduled-dates/next',  [MeetingScheduledDateController::class, 'next'])->name('meeting-scheduled-dates.next');
     });
 
     // Groups – admin only
@@ -102,6 +107,10 @@ Route::middleware('auth')->group(function () {
         // Bank Expenses write
         Route::get('bank-expenses/new', [BankExpenseController::class, 'create'])->name('bank-expenses.create');
         Route::resource('bank-expenses', BankExpenseController::class)->only(['store', 'edit', 'update']);
+
+        // Meeting scheduled dates write
+        Route::post('meeting-scheduled-dates',           [MeetingScheduledDateController::class, 'store'])->name('meeting-scheduled-dates.store');
+        Route::delete('meeting-scheduled-dates/{scheduledDate}', [MeetingScheduledDateController::class, 'destroy'])->name('meeting-scheduled-dates.destroy');
     });
 
     // DELETE routes – admin only

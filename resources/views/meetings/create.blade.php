@@ -37,6 +37,11 @@
                                 <label>Fecha de la Reunión <span class="text-danger">*</span></label>
                                 <input type="date" id="meeting_date" name="meeting_date" class="form-control"
                                     value="{{ old('meeting_date', date('Y-m-d')) }}" required>
+                                <small id="dateSuggestion" class="text-primary" style="display:none">
+                                    <i class="fas fa-calendar-check mr-1"></i>
+                                    <span id="dateSuggestionText"></span>
+                                    — <a href="#" id="useSuggestion">Usar esta fecha</a>
+                                </small>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -83,5 +88,38 @@ function updateMonth(dateVal) {
 const dateInput = document.getElementById('meeting_date');
 dateInput.addEventListener('change', function() { updateMonth(this.value); });
 updateMonth(dateInput.value);
+
+// Suggest next scheduled date when group changes
+const groupSelect = document.querySelector('select[name="group_id"]');
+if (groupSelect) {
+    groupSelect.addEventListener('change', function() {
+        const groupId = this.value;
+        if (!groupId) { document.getElementById('dateSuggestion').style.display = 'none'; return; }
+
+        fetch('{{ route("meeting-scheduled-dates.next") }}?group_id=' + groupId)
+            .then(r => r.json())
+            .then(data => {
+                if (data.date) {
+                    const d = new Date(data.date + 'T00:00:00');
+                    const label = d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                    document.getElementById('dateSuggestionText').textContent = 'Próxima fecha programada: ' + label;
+                    document.getElementById('dateSuggestion').style.display = 'block';
+                    document.getElementById('useSuggestion').dataset.date = data.date;
+                } else {
+                    document.getElementById('dateSuggestion').style.display = 'none';
+                }
+            });
+    });
+
+    document.getElementById('useSuggestion').addEventListener('click', function(e) {
+        e.preventDefault();
+        const d = this.dataset.date;
+        dateInput.value = d;
+        updateMonth(d);
+    });
+
+    // Trigger on load if group already selected
+    if (groupSelect.value) groupSelect.dispatchEvent(new Event('change'));
+}
 </script>
 @endpush
