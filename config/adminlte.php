@@ -367,12 +367,6 @@ return [
             'icon'  => 'fas fa-fw fa-users',
             'can'   => 'admin',
         ],
-        [
-            'text'  => 'Asistencia',
-            'route' => 'admin.attendance',
-            'icon'  => 'fas fa-fw fa-clipboard-check',
-            'can'   => 'admin',
-        ],
     ],
 
     /*

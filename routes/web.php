@@ -16,7 +16,6 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\GroupSelectorController;
 use App\Http\Controllers\MemberPortalController;
 use App\Http\Controllers\MeetingScheduledDateController;
-use App\Http\Controllers\AdminAttendanceController;
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
@@ -128,7 +127,6 @@ Route::middleware('auth')->group(function () {
     Route::middleware('admin')->group(function () {
         Route::get('users/new', [UserController::class, 'create'])->name('users.create');
         Route::resource('users', UserController::class)->except(['show', 'create']);
-        Route::get('admin/attendance', [AdminAttendanceController::class, 'index'])->name('admin.attendance');
     });
 
     // Member portal – miembro role only
