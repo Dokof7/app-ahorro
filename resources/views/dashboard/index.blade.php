@@ -188,6 +188,17 @@
 
 @push('js')
 <script>
+// Theme-aware chart colors (Chart.js 2.7, legacy v2 API).
+// Mode is read once at page load; live-toggle recolor is out of scope —
+// chart colors update on the next page load after switching themes.
+const tfDarkMode  = document.body.classList.contains('dark-mode')
+    || document.documentElement.classList.contains('dark-mode');
+const tfTickColor = tfDarkMode ? '#9ca3af' : '#6b7280';
+const tfGridColor = tfDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+if (window.Chart && Chart.defaults && Chart.defaults.global) {
+    Chart.defaults.global.defaultFontColor = tfTickColor;
+}
+
 const ctxSavings = document.getElementById('savingsChart').getContext('2d');
 new Chart(ctxSavings, {
     type: 'line',
@@ -198,7 +209,24 @@ new Chart(ctxSavings, {
             { label: 'Fondo Emergencia (Bs.)', data: {!! json_encode($chartData['emergency']) !!}, borderColor: '#0ea5e9', backgroundColor: 'rgba(14,165,233,0.1)', tension: 0.4, fill: true }
         ]
     },
-    options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
+    options: {
+        responsive: true,
+        // NOTE: 'plugins.legend' and 'scales.y' are Chart.js v3-style keys that
+        // v2.7 ignores (pre-existing, kept untouched). The v2-correct
+        // yAxes/xAxes config below is what v2.7 actually applies.
+        plugins: { legend: { position: 'top' } },
+        scales: {
+            y: { beginAtZero: true },
+            yAxes: [{
+                ticks: { beginAtZero: true, fontColor: tfTickColor },
+                gridLines: { color: tfGridColor }
+            }],
+            xAxes: [{
+                ticks: { fontColor: tfTickColor },
+                gridLines: { color: tfGridColor }
+            }]
+        }
+    }
 });
 
 const sharesLabels = {!! json_encode($sharesChart['labels']) !!};

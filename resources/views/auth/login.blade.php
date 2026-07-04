@@ -167,6 +167,79 @@
             padding-right: 1.25rem;
         }
     }
+
+    /* ==========================================================
+       Dark mode — Filament v3 dark palette.
+       Page background is also scoped under html.dark-mode so the
+       FOUC-prevention head script covers it before body class sync.
+       ========================================================== */
+    html.dark-mode .login-page,
+    body.dark-mode .login-page {
+        background-color: #030712;
+    }
+
+    body.dark-mode .login-card {
+        background: #111827;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.4),
+                    0 0 0 1px rgba(255, 255, 255, 0.10);
+    }
+
+    body.dark-mode .login-header {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    body.dark-mode .login-header h1 {
+        color: #f9fafb;
+    }
+
+    body.dark-mode .login-header p {
+        color: #9ca3af;
+    }
+
+    body.dark-mode .form-group label {
+        color: #d1d5db;
+    }
+
+    body.dark-mode .form-group input {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.10);
+        color: #e5e7eb;
+    }
+
+    body.dark-mode .form-group input::placeholder {
+        color: #6b7280;
+    }
+
+    body.dark-mode .form-group input:focus {
+        border-color: #f59e0b;
+        background-color: rgba(255, 255, 255, 0.07);
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.35);
+    }
+
+    body.dark-mode .form-group input.is-invalid {
+        border-color: #f87171;
+        box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.15);
+    }
+
+    body.dark-mode .invalid-feedback {
+        color: #f87171;
+    }
+
+    /* Amber button stays unchanged in dark mode (brand continuity) */
+
+    body.dark-mode .login-footer {
+        background: rgba(255, 255, 255, 0.03);
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        color: #9ca3af;
+    }
+
+    body.dark-mode .login-footer a {
+        color: #fbbf24;
+    }
+
+    body.dark-mode .login-footer a:hover {
+        color: #f59e0b;
+    }
 </style>
 
 <div class="login-page">

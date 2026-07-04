@@ -1117,3 +1117,694 @@ button.close:hover {
 .sidebar-mini .main-sidebar:hover {
     box-shadow: 4px 0 8px rgba(0,0,0,0.06) !important;
 }
+
+/* ============================================================
+   DARK MODE — Filament v3 dark palette
+   Scoped under body.dark-mode (AdminLTE's own class).
+   AdminLTE's built-in dark styles act as graceful fallback;
+   these rules override with the Filament palette on top.
+
+   Two-level FOUC prevention approach:
+     1. html.dark-mode covers body background before DOM is ready
+        (set by the inline head script via classList on <html>).
+     2. body.dark-mode covers all component-level overrides
+        (body class is synced on DOMContentLoaded, which fires
+        before first paint because CSS is render-blocking).
+   ============================================================ */
+
+/* ---- FOUC guard: body bg from <html> class (head script sets this) ---- */
+html.dark-mode body {
+    background-color: #030712 !important;
+    color: #d1d5db !important;
+}
+
+/* ---- Palette var overrides under body.dark-mode ---- */
+body.dark-mode {
+    background-color: #030712 !important;
+    color: #d1d5db !important;
+}
+
+/* ---- Typography ---- */
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode h4,
+body.dark-mode h5,
+body.dark-mode h6,
+body.dark-mode .h1,
+body.dark-mode .h2,
+body.dark-mode .h3,
+body.dark-mode .h4,
+body.dark-mode .h5,
+body.dark-mode .h6 {
+    color: #f9fafb !important;
+}
+
+body.dark-mode,
+body.dark-mode .wrapper,
+body.dark-mode .content-wrapper,
+body.dark-mode .main-header,
+body.dark-mode .main-sidebar,
+body.dark-mode .main-footer,
+body.dark-mode .modal,
+body.dark-mode .popover,
+body.dark-mode .tooltip-inner {
+    color: #d1d5db;
+}
+
+/* ---- Content wrapper ---- */
+body.dark-mode .content-wrapper {
+    background-color: #030712 !important;
+}
+
+/* ---- Navbar ---- */
+body.dark-mode .main-header.navbar {
+    background-color: #111827 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: none !important;
+}
+
+body.dark-mode .main-header .navbar-nav .nav-link,
+body.dark-mode .main-header .nav-link {
+    color: #9ca3af !important;
+}
+
+body.dark-mode .main-header .navbar-nav .nav-link:hover,
+body.dark-mode .main-header .nav-link:hover {
+    color: #f9fafb !important;
+}
+
+body.dark-mode .main-header .navbar-brand,
+body.dark-mode .main-header .brand-link {
+    background-color: #111827 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #f9fafb !important;
+}
+
+body.dark-mode .main-header .navbar-search input.form-control,
+body.dark-mode .main-header form.form-inline input.form-control {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.10) !important;
+    color: #e5e7eb !important;
+}
+
+/* ---- Sidebar ---- */
+body.dark-mode .main-sidebar,
+body.dark-mode .sidebar-light-warning .main-sidebar,
+body.dark-mode .sidebar-light-primary .main-sidebar,
+body.dark-mode .sidebar-dark-primary .main-sidebar,
+body.dark-mode .sidebar-dark-warning .main-sidebar {
+    background-color: #111827 !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: none !important;
+}
+
+body.dark-mode .brand-link,
+body.dark-mode .main-sidebar .brand-link {
+    background-color: #111827 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #f9fafb !important;
+}
+
+body.dark-mode .brand-link .brand-text,
+body.dark-mode .brand-link b {
+    color: #f9fafb !important;
+}
+
+body.dark-mode .sidebar,
+body.dark-mode .os-content,
+body.dark-mode .sidebar-wrapper {
+    background-color: #111827 !important;
+}
+
+body.dark-mode .nav-sidebar .nav-header {
+    color: #6b7280 !important;
+}
+
+body.dark-mode .nav-sidebar .nav-item .nav-link {
+    color: #d1d5db !important;
+}
+
+body.dark-mode .nav-sidebar .nav-item .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    color: #f9fafb !important;
+}
+
+body.dark-mode .nav-sidebar .nav-item .nav-link.active,
+body.dark-mode .sidebar-light-warning .nav-sidebar .nav-item .nav-link.active,
+body.dark-mode .sidebar-dark-primary .nav-sidebar .nav-item .nav-link.active,
+body.dark-mode .sidebar-dark-warning .nav-sidebar .nav-item .nav-link.active {
+    background-color: rgba(245, 158, 11, 0.10) !important;
+    color: #fbbf24 !important;
+}
+
+body.dark-mode .nav-sidebar .nav-item .nav-link.active .nav-icon,
+body.dark-mode .sidebar-light-warning .nav-sidebar .nav-item .nav-link.active .nav-icon,
+body.dark-mode .sidebar-dark-primary .nav-sidebar .nav-item .nav-link.active .nav-icon {
+    color: #fbbf24 !important;
+}
+
+body.dark-mode .nav-sidebar .nav-item .nav-link .nav-icon {
+    color: #6b7280 !important;
+}
+
+body.dark-mode .nav-sidebar .nav-item .nav-link:hover .nav-icon {
+    color: #d1d5db !important;
+}
+
+body.dark-mode .sidebar .user-panel {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .sidebar .user-panel .info a {
+    color: #d1d5db !important;
+}
+
+/* ---- Content header / page title ---- */
+body.dark-mode .content-header h1 {
+    color: #f9fafb !important;
+}
+
+/* ---- Breadcrumbs ---- */
+body.dark-mode .breadcrumb-item a {
+    color: #6b7280 !important;
+}
+
+body.dark-mode .breadcrumb-item a:hover {
+    color: #d1d5db !important;
+}
+
+body.dark-mode .breadcrumb-item.active {
+    color: #d1d5db !important;
+}
+
+body.dark-mode .breadcrumb-item + .breadcrumb-item::before {
+    color: #6b7280 !important;
+}
+
+/* ---- Cards ---- */
+body.dark-mode .card {
+    background-color: #111827 !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+}
+
+body.dark-mode .card-header {
+    background-color: transparent !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .card-header .card-title {
+    color: #f9fafb !important;
+}
+
+body.dark-mode .card-footer {
+    background-color: transparent !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .card-primary .card-header,
+body.dark-mode .card-success .card-header,
+body.dark-mode .card-info .card-header,
+body.dark-mode .card-warning .card-header,
+body.dark-mode .card-danger .card-header {
+    background-color: transparent !important;
+    color: #f9fafb !important;
+}
+
+body.dark-mode .card-primary .card-header .card-title,
+body.dark-mode .card-success .card-header .card-title,
+body.dark-mode .card-info .card-header .card-title,
+body.dark-mode .card-warning .card-header .card-title,
+body.dark-mode .card-danger .card-header .card-title {
+    color: #f9fafb !important;
+}
+
+/* ---- Buttons (amber primary unchanged; other variants stay) ---- */
+body.dark-mode .btn-primary {
+    background-color: #f59e0b !important;
+    border-color: #f59e0b !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode .btn-primary:hover,
+body.dark-mode .btn-primary:focus {
+    background-color: #d97706 !important;
+    border-color: #d97706 !important;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.35) !important;
+}
+
+body.dark-mode .btn-secondary,
+body.dark-mode .btn-light {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #d1d5db !important;
+}
+
+body.dark-mode .btn-secondary:hover,
+body.dark-mode .btn-light:hover {
+    background-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+body.dark-mode .btn-outline-primary {
+    color: #fbbf24 !important;
+    border-color: #fbbf24 !important;
+}
+
+body.dark-mode .btn-outline-primary:hover {
+    background-color: rgba(245, 158, 11, 0.10) !important;
+    color: #fbbf24 !important;
+}
+
+body.dark-mode .btn-outline-secondary {
+    color: #9ca3af !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+body.dark-mode .btn-outline-warning {
+    color: #fbbf24 !important;
+    border-color: #fbbf24 !important;
+}
+
+body.dark-mode .btn-outline-warning:hover {
+    background-color: rgba(251, 191, 36, 0.10) !important;
+    color: #fbbf24 !important;
+}
+
+/* ---- Soft badges — Filament dark style ---- */
+body.dark-mode .badge.bg-success,
+body.dark-mode .badge-success {
+    background-color: rgba(74, 222, 128, 0.10) !important;
+    color: #4ade80 !important;
+}
+
+body.dark-mode .badge.bg-info,
+body.dark-mode .badge-info {
+    background-color: rgba(56, 189, 248, 0.10) !important;
+    color: #38bdf8 !important;
+}
+
+body.dark-mode .badge.bg-danger,
+body.dark-mode .badge-danger {
+    background-color: rgba(248, 113, 113, 0.10) !important;
+    color: #f87171 !important;
+}
+
+body.dark-mode .badge.bg-warning,
+body.dark-mode .badge-warning,
+body.dark-mode .badge.bg-primary,
+body.dark-mode .badge-primary {
+    background-color: rgba(251, 191, 36, 0.10) !important;
+    color: #fbbf24 !important;
+}
+
+body.dark-mode .badge.bg-secondary,
+body.dark-mode .badge-secondary {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: #9ca3af !important;
+}
+
+body.dark-mode .badge.bg-dark,
+body.dark-mode .badge-dark {
+    background-color: rgba(255, 255, 255, 0.10) !important;
+    color: #f9fafb !important;
+}
+
+/* ---- Alerts ---- */
+body.dark-mode .alert-success {
+    background-color: rgba(74, 222, 128, 0.10) !important;
+    border-color: rgba(74, 222, 128, 0.25) !important;
+    color: #4ade80 !important;
+}
+
+body.dark-mode .alert-danger,
+body.dark-mode .alert-error {
+    background-color: rgba(248, 113, 113, 0.10) !important;
+    border-color: rgba(248, 113, 113, 0.25) !important;
+    color: #f87171 !important;
+}
+
+body.dark-mode .alert-warning {
+    background-color: rgba(251, 191, 36, 0.10) !important;
+    border-color: rgba(251, 191, 36, 0.25) !important;
+    color: #fbbf24 !important;
+}
+
+body.dark-mode .alert-info {
+    background-color: rgba(56, 189, 248, 0.10) !important;
+    border-color: rgba(56, 189, 248, 0.25) !important;
+    color: #38bdf8 !important;
+}
+
+/* ---- Tables ---- */
+body.dark-mode .table thead th {
+    color: #f9fafb !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    background-color: #111827 !important;
+}
+
+body.dark-mode .table tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+body.dark-mode .table tbody td {
+    color: #d1d5db !important;
+    border-top: none !important;
+}
+
+body.dark-mode .table-hover tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+body.dark-mode .table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* ---- Forms ---- */
+body.dark-mode .form-control {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    color: #e5e7eb !important;
+}
+
+body.dark-mode .form-control:focus {
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.35) !important;
+    background-color: rgba(255, 255, 255, 0.07) !important;
+}
+
+body.dark-mode .form-control::placeholder {
+    color: #6b7280 !important;
+}
+
+body.dark-mode label,
+body.dark-mode .form-label {
+    color: #d1d5db !important;
+}
+
+body.dark-mode .input-group-text {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    color: #9ca3af !important;
+}
+
+body.dark-mode select.form-control {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+}
+
+/* ---- Select2 dark ---- */
+body.dark-mode .select2-container--bootstrap4 .select2-selection--single {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    color: #e5e7eb !important;
+}
+
+body.dark-mode .select2-container--bootstrap4.select2-container--focus .select2-selection--single,
+body.dark-mode .select2-container--bootstrap4.select2-container--open .select2-selection--single {
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.35) !important;
+}
+
+body.dark-mode .select2-container--bootstrap4 .select2-selection--single .select2-selection__rendered {
+    color: #e5e7eb !important;
+}
+
+body.dark-mode .select2-container--bootstrap4 .select2-selection--single .select2-selection__arrow b {
+    border-top-color: #6b7280 !important;
+}
+
+body.dark-mode .select2-container--bootstrap4 .select2-selection--multiple {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+}
+
+body.dark-mode .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice {
+    background-color: rgba(245, 158, 11, 0.10) !important;
+    border-color: rgba(245, 158, 11, 0.30) !important;
+    color: #fbbf24 !important;
+}
+
+body.dark-mode .select2-container--bootstrap4 .select2-dropdown {
+    background-color: #111827 !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+}
+
+body.dark-mode .select2-container--bootstrap4 .select2-results__option {
+    color: #d1d5db !important;
+    background-color: transparent !important;
+}
+
+body.dark-mode .select2-container--bootstrap4 .select2-results__option--highlighted[aria-selected] {
+    background-color: rgba(245, 158, 11, 0.10) !important;
+    color: #fbbf24 !important;
+}
+
+body.dark-mode .select2-container--bootstrap4 .select2-results__option[aria-selected=true] {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+    color: #e5e7eb !important;
+}
+
+body.dark-mode .select2-container--bootstrap4 .select2-search--dropdown .select2-search__field {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    color: #e5e7eb !important;
+}
+
+body.dark-mode .select2-container--bootstrap4 .select2-search--dropdown .select2-search__field:focus {
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.35) !important;
+}
+
+/* ---- DataTables pagination ---- */
+body.dark-mode .dataTables_wrapper .dataTables_paginate .paginate_button {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    color: #9ca3af !important;
+}
+
+body.dark-mode .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #f9fafb !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+body.dark-mode .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+body.dark-mode .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+    background: #f59e0b !important;
+    border-color: #f59e0b !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+body.dark-mode .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+    color: #4b5563 !important;
+    background: transparent !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+body.dark-mode .dataTables_wrapper .dataTables_filter input,
+body.dark-mode .dataTables_wrapper .dataTables_length select {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    color: #e5e7eb !important;
+}
+
+body.dark-mode .dataTables_wrapper .dataTables_filter label,
+body.dark-mode .dataTables_wrapper .dataTables_length label,
+body.dark-mode .dataTables_wrapper .dataTables_info {
+    color: #9ca3af !important;
+}
+
+/* ---- Small-box stat cards ---- */
+body.dark-mode .small-box,
+body.dark-mode .small-box.bg-success,
+body.dark-mode .small-box.bg-info,
+body.dark-mode .small-box.bg-warning,
+body.dark-mode .small-box.bg-danger,
+body.dark-mode .small-box.bg-primary,
+body.dark-mode .small-box.bg-secondary {
+    background-color: #111827 !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    color: #d1d5db !important;
+}
+
+body.dark-mode .small-box .inner h3 {
+    color: #f9fafb !important;
+}
+
+body.dark-mode .small-box .inner p {
+    color: #9ca3af !important;
+}
+
+/* Icon backgrounds: 10% color in dark mode */
+body.dark-mode .small-box.bg-success .icon { background-color: rgba(74, 222, 128, 0.10) !important; }
+body.dark-mode .small-box.bg-info    .icon { background-color: rgba(56, 189, 248, 0.10) !important; }
+body.dark-mode .small-box.bg-warning .icon { background-color: rgba(251, 191, 36, 0.10) !important; }
+body.dark-mode .small-box.bg-danger  .icon { background-color: rgba(248, 113, 113, 0.10) !important; }
+body.dark-mode .small-box.bg-primary .icon { background-color: rgba(56, 189, 248, 0.10) !important; }
+
+body.dark-mode .small-box-footer {
+    background-color: transparent !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #9ca3af !important;
+}
+
+body.dark-mode .small-box-footer:hover {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+    color: #d1d5db !important;
+}
+
+/* ---- Info-box metric cards ---- */
+body.dark-mode .info-box {
+    background-color: #111827 !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+}
+
+body.dark-mode .info-box-icon.bg-success {
+    background-color: rgba(74, 222, 128, 0.10) !important;
+    color: #4ade80 !important;
+}
+
+body.dark-mode .info-box-icon.bg-info {
+    background-color: rgba(56, 189, 248, 0.10) !important;
+    color: #38bdf8 !important;
+}
+
+body.dark-mode .info-box-icon.bg-warning {
+    background-color: rgba(251, 191, 36, 0.10) !important;
+    color: #fbbf24 !important;
+}
+
+body.dark-mode .info-box-icon.bg-danger {
+    background-color: rgba(248, 113, 113, 0.10) !important;
+    color: #f87171 !important;
+}
+
+body.dark-mode .info-box-icon.bg-primary {
+    background-color: rgba(56, 189, 248, 0.10) !important;
+    color: #38bdf8 !important;
+}
+
+body.dark-mode .info-box-icon.bg-secondary {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+    color: #9ca3af !important;
+}
+
+body.dark-mode .info-box-text {
+    color: #9ca3af !important;
+}
+
+body.dark-mode .info-box-number {
+    color: #f9fafb !important;
+}
+
+/* ---- Modals ---- */
+body.dark-mode .modal-content {
+    background-color: #111827 !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+}
+
+body.dark-mode .modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .modal-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .modal-title {
+    color: #f9fafb !important;
+}
+
+body.dark-mode .modal-body {
+    color: #d1d5db !important;
+}
+
+/* ---- Dropdown menus ---- */
+body.dark-mode .dropdown-menu {
+    background-color: #111827 !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+}
+
+body.dark-mode .dropdown-item {
+    color: #d1d5db !important;
+}
+
+body.dark-mode .dropdown-item:hover,
+body.dark-mode .dropdown-item:focus {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+    color: #f9fafb !important;
+}
+
+body.dark-mode .dropdown-divider {
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ---- SweetAlert2 dark ---- */
+body.dark-mode .swal2-popup {
+    background-color: #111827 !important;
+    color: #d1d5db !important;
+}
+
+body.dark-mode .swal2-title {
+    color: #f9fafb !important;
+}
+
+body.dark-mode .swal2-html-container {
+    color: #9ca3af !important;
+}
+
+body.dark-mode .swal2-cancel {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: #d1d5db !important;
+}
+
+body.dark-mode .swal2-cancel:hover {
+    background-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* ---- Tabs ---- */
+body.dark-mode .nav-tabs .nav-link.active,
+body.dark-mode .nav-tabs .nav-item.show .nav-link {
+    border-color: rgba(255, 255, 255, 0.10) rgba(255, 255, 255, 0.10) #111827 !important;
+    color: #f9fafb !important;
+}
+
+body.dark-mode .nav-tabs .nav-link {
+    color: #9ca3af !important;
+}
+
+body.dark-mode .nav-tabs .nav-link:hover {
+    color: #f9fafb !important;
+    border-color: rgba(255, 255, 255, 0.08) rgba(255, 255, 255, 0.08) rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ---- Main footer ---- */
+body.dark-mode .main-footer {
+    background-color: #111827 !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #6b7280 !important;
+}
+
+/* ---- Close button ---- */
+body.dark-mode button.close {
+    color: #9ca3af !important;
+}
+
+body.dark-mode button.close:hover {
+    color: #f9fafb !important;
+}
+
+/* ---- Text utilities ---- */
+body.dark-mode .text-muted {
+    color: #6b7280 !important;
+}
+
+/* ---- Misc: progress bars, pills (amber active unchanged) ---- */
+body.dark-mode .nav-pills .nav-link {
+    color: #9ca3af !important;
+}
+
+/* ---- Sidebar mini overlay ---- */
+body.dark-mode .sidebar-mini .main-sidebar:hover {
+    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.40) !important;
+}

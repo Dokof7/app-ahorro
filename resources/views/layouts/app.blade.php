@@ -63,6 +63,24 @@
 @stop
 
 @push('css')
+{{-- Theme FOUC prevention: apply saved dark mode before first paint.
+     Level 1: class on <html> (available here in <head>) drives the
+     html.dark-mode body background rule so no white flash occurs.
+     Level 2: body class (required by all component-level dark rules)
+     is synced on DOMContentLoaded, which fires before first paint
+     because CSS is render-blocking. --}}
+<script>
+(function () {
+    try {
+        if (localStorage.getItem('tf-theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+            document.addEventListener('DOMContentLoaded', function () {
+                document.body.classList.add('dark-mode');
+            });
+        }
+    } catch (e) { /* localStorage unavailable: stay in light mode */ }
+})();
+</script>
 <style>
 :root {
     --ga-green: #16a34a;
@@ -104,6 +122,35 @@ $(document).ready(function() {
         $('.select2').select2({ theme: 'bootstrap4', width: '100%' });
     }
 });
+
+// Dark/light theme toggle (Filament theme).
+// Injects a moon/sun nav item into the right navbar list; persists
+// the explicit user choice in localStorage ('tf-theme'). Default: light.
+(function () {
+    var isDark = document.body.classList.contains('dark-mode')
+        || document.documentElement.classList.contains('dark-mode');
+    var $navList = $('.main-header .navbar-nav').last();
+    if (!$navList.length) return;
+
+    var $item = $(
+        '<li class="nav-item">' +
+        '<a class="nav-link" href="#" id="tf-theme-toggle" role="button" ' +
+        'aria-label="Cambiar tema" title="Cambiar tema">' +
+        '<i class="fas ' + (isDark ? 'fa-sun' : 'fa-moon') + '"></i>' +
+        '</a></li>'
+    );
+    $navList.append($item);
+
+    $item.on('click', '#tf-theme-toggle', function (e) {
+        e.preventDefault();
+        var dark = document.body.classList.toggle('dark-mode');
+        document.documentElement.classList.toggle('dark-mode', dark);
+        try { localStorage.setItem('tf-theme', dark ? 'dark' : 'light'); } catch (err) {}
+        $(this).find('i')
+            .toggleClass('fa-moon', !dark)
+            .toggleClass('fa-sun', dark);
+    });
+})();
 </script>
 @endpush
 
