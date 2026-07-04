@@ -12,6 +12,10 @@
     <link rel="stylesheet" href="{{ asset('vendor/fontawesome-free/css/all.min.css') }}">
     <!-- Google Font -->
     <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
+    <!-- Inter (Filament theme) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Filament theme overrides -->
+    <link rel="stylesheet" href="{{ asset('css/theme-filament.css') }}?v=1">
 
     @stack('css')
 </head>

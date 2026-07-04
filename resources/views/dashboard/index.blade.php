@@ -194,8 +194,8 @@ new Chart(ctxSavings, {
     data: {
         labels: {!! json_encode($chartData['labels']) !!},
         datasets: [
-            { label: 'Ahorros (Bs.)', data: {!! json_encode($chartData['savings']) !!}, borderColor: '#28a745', backgroundColor: 'rgba(40,167,69,0.1)', tension: 0.4, fill: true },
-            { label: 'Fondo Emergencia (Bs.)', data: {!! json_encode($chartData['emergency']) !!}, borderColor: '#17a2b8', backgroundColor: 'rgba(23,162,184,0.1)', tension: 0.4, fill: true }
+            { label: 'Ahorros (Bs.)', data: {!! json_encode($chartData['savings']) !!}, borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.1)', tension: 0.4, fill: true },
+            { label: 'Fondo Emergencia (Bs.)', data: {!! json_encode($chartData['emergency']) !!}, borderColor: '#0ea5e9', backgroundColor: 'rgba(14,165,233,0.1)', tension: 0.4, fill: true }
         ]
     },
     options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
@@ -205,8 +205,8 @@ const sharesLabels = {!! json_encode($sharesChart['labels']) !!};
 const sharesData   = {!! json_encode($sharesChart['data']) !!};
 
 const palette = [
-    '#28a745','#17a2b8','#ffc107','#dc3545','#6f42c1','#fd7e14',
-    '#20c997','#e83e8c','#007bff','#6c757d','#343a40','#f8f9fa'
+    '#f59e0b','#0ea5e9','#16a34a','#8b5cf6','#ec4899','#f97316',
+    '#14b8a6','#ef4444','#6366f1','#64748b','#eab308','#06b6d4'
 ];
 
 const sharesColors = sharesLabels.map((_, i) => palette[i % palette.length]);

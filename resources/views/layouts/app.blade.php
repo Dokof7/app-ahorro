@@ -65,9 +65,9 @@
 @push('css')
 <style>
 :root {
-    --ga-green: #28a745;
-    --ga-green-dark: #1e7e34;
-    --ga-blue: #17a2b8;
+    --ga-green: #16a34a;
+    --ga-green-dark: #15803d;
+    --ga-blue: #0ea5e9;
 }
 .badge { font-size: 0.8rem; }
 .table th { font-weight: 600; background-color: #f8f9fa; }
