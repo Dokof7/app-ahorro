@@ -309,7 +309,7 @@ class ReportController extends Controller
             ->count();
 
         $ranked = $members->map(function ($member) use ($totalMeetings) {
-            $attended   = $member->attendances->where('attended', true)->count();
+            $attended   = $member->attendances->whereIn('status', ['present', 'late'])->count();
             $paid       = $member->contributions->where('shares', '>', 0)->count();
             $punctuality = $totalMeetings > 0 ? round(($attended / max($totalMeetings, 1)) * 100, 1) : 0;
             return [
@@ -456,7 +456,7 @@ class ReportController extends Controller
         $totalMeetings = $meetings->count();
 
         $memberRows = $members->map(function ($member) use ($totalMeetings) {
-            $attended = $member->attendances->where('attended', true)->count();
+            $attended = $member->attendances->whereIn('status', ['present', 'late'])->count();
             $pct      = $totalMeetings > 0 ? round(($attended / $totalMeetings) * 100, 1) : 0;
             return [
                 'member'   => $member,
@@ -488,7 +488,7 @@ class ReportController extends Controller
             ->count();
 
         $rows = $members->map(function ($member) use ($totalMeetings) {
-            $attended = $member->attendances->where('attended', true)->count();
+            $attended = $member->attendances->whereIn('status', ['present', 'late'])->count();
             return [
                 'member'           => $member,
                 'attended'         => $attended,

@@ -89,7 +89,7 @@
                         @foreach($meeting->contributions as $i => $contribution)
                         @php
                             $att = $meeting->attendances->firstWhere('member_id', $contribution->member_id);
-                            $isAbsent = $att && !$att->attended && !$att->excused_absence;
+                            $isAbsent = $att && $att->status === 'absent';
                         @endphp
                         <input type="hidden" name="contributions[{{ $i }}][id]" value="{{ $contribution->id }}">
                         <tr class="{{ $isAbsent ? 'table-danger' : '' }}">
@@ -136,7 +136,7 @@
                     @foreach($meeting->contributions as $i => $contribution)
                     @php
                         $att = $meeting->attendances->firstWhere('member_id', $contribution->member_id);
-                        $isAbsent = $att && !$att->attended && !$att->excused_absence;
+                        $isAbsent = $att && $att->status === 'absent';
                     @endphp
                     <tr class="{{ $isAbsent ? 'table-danger' : '' }}">
                         <td>{{ $i + 1 }}</td>
@@ -161,21 +161,34 @@
     <div class="tab-pane fade show active" id="attendance">
         <h5 class="mb-1">Registro de Asistencia</h5>
         @if($meeting->isOpen() && auth()->user()->canEdit())
+        <p class="text-muted small mb-2">✓ Asistió &nbsp;·&nbsp; ○ Atraso &nbsp;·&nbsp; ✗ Falta &nbsp;·&nbsp; L Falta c/Permiso</p>
         <form action="{{ route('meetings.attendance.update', $meeting) }}" method="POST">
             @csrf
             <div class="table-responsive">
                 <table class="table table-bordered table-hover">
-                    <thead class="thead-dark"><tr><th>N°</th><th>Nombre</th><th class="text-center">Asistió</th><th class="text-center">Falta c/Perm.</th><th class="text-center">Pagó Ahorro</th><th class="text-center">Pagó Emergencia</th><th class="text-center">Tiene Multa</th><th>Observaciones</th></tr></thead>
+                    <thead class="thead-dark"><tr><th>N°</th><th>Nombre</th><th class="text-center">Asistencia</th><th>Observaciones</th></tr></thead>
                     <tbody>
                         @foreach($meeting->attendances as $i => $att)
                         <input type="hidden" name="attendances[{{ $i }}][id]" value="{{ $att->id }}">
                         <tr>
-                            <td>{{ $i + 1 }}</td><td><strong>{{ $att->member->full_name }}</strong></td>
-                            <td class="text-center"><input type="checkbox" name="attendances[{{ $i }}][attended]" value="1" {{ $att->attended ? 'checked' : '' }} class="att-attended" data-row="{{ $i }}"></td>
-                            <td class="text-center"><input type="checkbox" name="attendances[{{ $i }}][excused_absence]" value="1" {{ $att->excused_absence ? 'checked' : '' }} class="att-excused" data-row="{{ $i }}"></td>
-                            <td class="text-center"><input type="checkbox" name="attendances[{{ $i }}][paid_savings]" value="1" {{ $att->paid_savings ? 'checked' : '' }}></td>
-                            <td class="text-center"><input type="checkbox" name="attendances[{{ $i }}][paid_emergency]" value="1" {{ $att->paid_emergency ? 'checked' : '' }}></td>
-                            <td class="text-center"><input type="checkbox" name="attendances[{{ $i }}][has_fine]" value="1" {{ $att->has_fine ? 'checked' : '' }}></td>
+                            <td>{{ $i + 1 }}</td>
+                            <td><strong>{{ $att->member->full_name }}</strong></td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-toggle btn-group-sm" data-toggle="buttons">
+                                    <label class="btn btn-outline-success{{ $att->status === 'present' ? ' active' : '' }}" title="Asistió" aria-label="Asistió">
+                                        <input type="radio" name="attendances[{{ $i }}][status]" value="present" {{ $att->status === 'present' ? 'checked' : '' }} autocomplete="off"> ✓
+                                    </label>
+                                    <label class="btn btn-outline-warning{{ $att->status === 'late' ? ' active' : '' }}" title="Atraso" aria-label="Atraso">
+                                        <input type="radio" name="attendances[{{ $i }}][status]" value="late" {{ $att->status === 'late' ? 'checked' : '' }} autocomplete="off"> ○
+                                    </label>
+                                    <label class="btn btn-outline-danger{{ $att->status === 'absent' ? ' active' : '' }}" title="Falta" aria-label="Falta">
+                                        <input type="radio" name="attendances[{{ $i }}][status]" value="absent" {{ $att->status === 'absent' ? 'checked' : '' }} autocomplete="off"> ✗
+                                    </label>
+                                    <label class="btn btn-outline-info{{ $att->status === 'excused' ? ' active' : '' }}" title="Falta c/Permiso" aria-label="Falta c/Permiso">
+                                        <input type="radio" name="attendances[{{ $i }}][status]" value="excused" {{ $att->status === 'excused' ? 'checked' : '' }} autocomplete="off"> L
+                                    </label>
+                                </div>
+                            </td>
                             <td><input type="text" name="attendances[{{ $i }}][observations]" value="{{ $att->observations }}" class="form-control form-control-sm" placeholder="Obs..."></td>
                         </tr>
                         @endforeach
@@ -187,23 +200,19 @@
         @else
         <div class="table-responsive">
             <table class="table table-bordered">
-                <thead class="thead-dark"><tr><th>N°</th><th>Nombre</th><th class="text-center">Estado</th><th class="text-center">Pagó Ahorro</th><th class="text-center">Pagó Emergencia</th><th class="text-center">Multa</th><th>Observaciones</th></tr></thead>
+                <thead class="thead-dark"><tr><th>N°</th><th>Nombre</th><th class="text-center">Estado</th><th>Observaciones</th></tr></thead>
                 <tbody>
                     @foreach($meeting->attendances as $i => $att)
                     <tr>
                         <td>{{ $i + 1 }}</td><td>{{ $att->member->full_name }}</td>
                         <td class="text-center">
-                            @if($att->attended)
-                                <span class="badge bg-success">Asistió</span>
-                            @elseif($att->excused_absence)
-                                <span class="badge bg-warning text-dark">Falta c/Permiso</span>
-                            @else
-                                <span class="badge bg-danger">Falta</span>
-                            @endif
+                            @php
+                                $cfg = \App\Models\Attendance::$statusConfig[$att->status] ?? \App\Models\Attendance::$statusConfig['absent'];
+                            @endphp
+                            <span class="badge bg-{{ $cfg['color'] }}{{ $cfg['color'] === 'warning' ? ' text-dark' : '' }}">
+                                {{ $cfg['symbol'] }} {{ $cfg['label'] }}
+                            </span>
                         </td>
-                        <td class="text-center">{!! $att->paid_savings ? '<span class="text-success">✓</span>' : '<span class="text-danger">✗</span>' !!}</td>
-                        <td class="text-center">{!! $att->paid_emergency ? '<span class="text-success">✓</span>' : '<span class="text-danger">✗</span>' !!}</td>
-                        <td class="text-center">{!! $att->has_fine ? '<span class="text-warning">⚠</span>' : '<span class="text-success">-</span>' !!}</td>
                         <td>{{ $att->observations }}</td>
                     </tr>
                     @endforeach
@@ -216,7 +225,7 @@
     <div class="tab-pane fade" id="summary">
 
         @php
-            $attendedCount   = $meeting->attendances->where('attended', true)->count();
+            $attendedCount   = $meeting->attendances->whereIn('status', ['present', 'late'])->count();
             $totalMembers    = $meeting->attendances->count();
             $totalShares     = $meeting->contributions->sum('shares');
             $totalSavings    = $meeting->contributions->sum('savings');
@@ -297,13 +306,13 @@
                                 <td>{{ $i + 1 }}</td>
                                 <td><strong>{{ $c->member->full_name }}</strong></td>
                                 <td class="text-center">
-                                    @if($att && $att->attended)
-                                        <span class="badge bg-success"><i class="fas fa-check"></i> Asistió</span>
-                                    @elseif($att && $att->excused_absence)
-                                        <span class="badge bg-warning text-dark"><i class="fas fa-user-clock"></i> c/Permiso</span>
-                                    @else
-                                        <span class="badge bg-danger"><i class="fas fa-times"></i> Falta</span>
-                                    @endif
+                                    @php
+                                        $attStatus = $att ? $att->status : 'absent';
+                                        $attCfg = \App\Models\Attendance::$statusConfig[$attStatus] ?? \App\Models\Attendance::$statusConfig['absent'];
+                                    @endphp
+                                    <span class="badge bg-{{ $attCfg['color'] }}{{ $attCfg['color'] === 'warning' ? ' text-dark' : '' }}">
+                                        {{ $attCfg['symbol'] }} {{ $attCfg['label'] }}
+                                    </span>
                                 </td>
                                 <td class="text-center">
                                     <span class="badge bg-primary">{{ $c->shares ?? 0 }}</span>
@@ -473,20 +482,6 @@
 
 @push('js')
 <script>
-// Asistió y Falta c/Permiso son mutuamente excluyentes
-$(document).on('change', '.att-attended', function() {
-    if ($(this).is(':checked')) {
-        const row = $(this).data('row');
-        $(`.att-excused[data-row="${row}"]`).prop('checked', false);
-    }
-});
-$(document).on('change', '.att-excused', function() {
-    if ($(this).is(':checked')) {
-        const row = $(this).data('row');
-        $(`.att-attended[data-row="${row}"]`).prop('checked', false);
-    }
-});
-
 const SHARE_VALUE = {{ $meeting->group->share_value ?? 10 }};
 
 $(document).on('input', '.contribution-input', function() {
