@@ -12,7 +12,7 @@ class Member extends Model
 
     protected $fillable = [
         'group_id', 'user_id', 'full_name', 'document_number',
-        'phone', 'address', 'join_date', 'status',
+        'phone', 'address', 'join_date', 'cycle', 'status',
         'membership_paid', 'membership_paid_at',
     ];
 

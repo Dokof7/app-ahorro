@@ -23,15 +23,17 @@ class MemberController extends Controller
 
             $query = Member::with('group')->whereIn('group_id', $groupIds);
             if ($request->group_id) $query->where('group_id', $request->group_id);
+            if ($request->cycle) $query->where('cycle', $request->cycle);
 
             return DataTables::of($query)
                 ->addColumn('group_name', fn($m) => $m->group->name)
+                ->addColumn('cycle_badge', fn($m) => '<span class="badge bg-info">Ciclo ' . $m->cycle . '</span>')
                 ->addColumn('status_badge', fn($m) => $m->status === 'active'
                     ? '<span class="badge bg-success">Activo</span>'
                     : '<span class="badge bg-danger">Inactivo</span>')
                 ->addColumn('pending_fines', fn($m) => $m->pendingFines()->count())
                 ->addColumn('actions', fn($m) => view('members._actions', ['member' => $m])->render())
-                ->rawColumns(['status_badge', 'actions'])
+                ->rawColumns(['cycle_badge', 'status_badge', 'actions'])
                 ->make(true);
         }
 
@@ -79,6 +81,7 @@ class MemberController extends Controller
             'phone'           => 'nullable|string|max:20',
             'address'         => 'nullable|string',
             'join_date'       => 'required|date',
+            'cycle'           => 'required|integer|min:1|max:99',
             'status'          => 'required|in:active,inactive',
             'user_id'         => 'nullable|exists:users,id',
         ]);
@@ -141,6 +144,7 @@ class MemberController extends Controller
             'phone'           => 'nullable|string|max:20',
             'address'         => 'nullable|string',
             'join_date'       => 'required|date',
+            'cycle'           => 'required|integer|min:1|max:99',
             'status'          => 'required|in:active,inactive',
         ]);
         try {

@@ -57,6 +57,15 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
+                                <label>Ciclo <span class="text-danger">*</span></label>
+                                <input type="number" name="cycle" class="form-control @error('cycle') is-invalid @enderror"
+                                    value="{{ old('cycle', 1) }}" min="1" max="99" required>
+                                <small class="form-text text-muted">Número de ciclo en el que participa el miembro.</small>
+                                @error('cycle')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
                                 <label>Estado</label>
                                 <select name="status" class="form-control">
                                     <option value="active">Activo</option>

@@ -58,6 +58,7 @@
             <div class="col-md-6">
                 <p><strong>Dirección:</strong> {{ $member->address ?? '-' }}</p>
                 <p><strong>Fecha de ingreso:</strong> {{ $member->join_date->format('d/m/Y') }}</p>
+                <p><strong>Ciclo:</strong> <span class="badge bg-info">Ciclo {{ $member->cycle }}</span></p>
                 <p><strong>Estado:</strong>
                     @if($member->status === 'active')<span class="badge bg-success">Activo</span>@else<span class="badge bg-danger">Inactivo</span>@endif
                 </p>
