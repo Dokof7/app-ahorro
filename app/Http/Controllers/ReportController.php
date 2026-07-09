@@ -162,15 +162,18 @@ class ReportController extends Controller
     private function financialSummaryReport(array $filters, $groupIds): array
     {
         $groupQuery = Group::whereIn('id', $groupIds)
-            ->with(['members', 'meetings.contributions', 'meetings.fines', 'meetings.loans', 'meetings.loanPayments', 'meetings.bankExpenses']);
+            ->with(['members', 'meetings.contributions', 'meetings.totals', 'meetings.fines', 'meetings.loans', 'meetings.loanPayments', 'meetings.bankExpenses']);
         if (!empty($filters['group_id'])) $groupQuery->where('id', $filters['group_id']);
         $groups = $groupQuery->get();
 
         $summary = [];
         foreach ($groups as $group) {
-            $totalSavings      = $group->meetings->flatMap->contributions->sum('savings');
-            $totalEmergency    = $group->meetings->flatMap->contributions->sum('emergency_fund');
-            $totalFines        = $group->meetings->flatMap->fines->where('status', 'paid')->sum('amount');
+            // Partial-registration meetings store amounts in a totals row instead
+            // of per-member contribution rows, so both sources are added.
+            $meetingTotals     = $group->meetings->pluck('totals')->filter();
+            $totalSavings      = $group->meetings->flatMap->contributions->sum('savings') + $meetingTotals->sum('savings');
+            $totalEmergency    = $group->meetings->flatMap->contributions->sum('emergency_fund') + $meetingTotals->sum('emergency_fund');
+            $totalFines        = $group->meetings->flatMap->fines->where('status', 'paid')->sum('amount') + $meetingTotals->sum('fine');
             $totalLoansOut     = $group->meetings->flatMap->loans->sum('amount');
             $totalLoansRecov   = $group->meetings->flatMap->loans->sum('amount_paid');
             $totalBankExpenses = $group->meetings->flatMap->bankExpenses->sum('amount');
@@ -197,7 +200,7 @@ class ReportController extends Controller
     private function savingsEvolutionReport(array $filters, $groupIds): array
     {
         $meetingQuery = Meeting::whereIn('group_id', $groupIds)
-            ->with(['contributions', 'group', 'summary'])
+            ->with(['contributions', 'totals', 'group', 'summary'])
             ->orderBy('meeting_date');
         if (!empty($filters['group_id'])) $meetingQuery->where('group_id', $filters['group_id']);
         if (!empty($filters['year']))     $meetingQuery->whereYear('meeting_date', $filters['year']);
@@ -213,7 +216,7 @@ class ReportController extends Controller
                     'accumulated' => 0,
                 ];
             }
-            $monthlyData[$key]['savings'] += $meeting->contributions->sum('savings');
+            $monthlyData[$key]['savings'] += $meeting->contributions->sum('savings') + ($meeting->totals?->savings ?? 0);
         }
 
         $accumulated = 0;
@@ -228,7 +231,7 @@ class ReportController extends Controller
     private function cashStatementReport(array $filters, $groupIds): array
     {
         $meetingQuery = Meeting::whereIn('group_id', $groupIds)
-            ->with(['contributions', 'loans', 'loanPayments', 'fines', 'bankExpenses', 'summary', 'group'])
+            ->with(['contributions', 'totals', 'loans', 'loanPayments', 'fines', 'bankExpenses', 'summary', 'group'])
             ->orderBy('meeting_date');
         if (!empty($filters['group_id'])) $meetingQuery->where('group_id', $filters['group_id']);
         if (!empty($filters['year']))     $meetingQuery->whereYear('meeting_date', $filters['year']);
@@ -236,9 +239,9 @@ class ReportController extends Controller
 
         $rows = [];
         foreach ($meetings as $meeting) {
-            $incomeSavings  = $meeting->contributions->sum('savings');
+            $incomeSavings  = $meeting->contributions->sum('savings') + ($meeting->totals?->savings ?? 0);
             $incomeInterest = $meeting->loanPayments->sum('interest_paid');
-            $incomeFines    = $meeting->fines->where('status', 'paid')->sum('amount');
+            $incomeFines    = $meeting->fines->where('status', 'paid')->sum('amount') + ($meeting->totals?->fine ?? 0);
             $totalIncome    = $incomeSavings + $incomeInterest + $incomeFines;
             $loansOut       = $meeting->loans->sum('amount');
             $bankExpenses   = $meeting->bankExpenses->sum('amount');
