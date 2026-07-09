@@ -47,6 +47,12 @@
                                 <option value="loans_paid">Préstamos Pagados</option>
                                 <option value="monthly">Aportes Mensuales</option>
                             </optgroup>
+                            @if(auth()->user()->isAdmin() || auth()->user()->isAdminGrupo())
+                            <optgroup label="Reportes Comparativos">
+                                <option value="comparative_groups">15. Comparativo de Grupos</option>
+                                <option value="comparative_periods">16. Comparativo de Períodos</option>
+                            </optgroup>
+                            @endif
                         </select>
                     </div>
                 </div>
@@ -131,9 +137,11 @@ const FILTER_MAP = {
     // show year filter
     year_filter:   ['savings_evolution', 'cash_statement', 'loan_history',
                     'active_loans', 'loan_profitability', 'meeting_attendance',
-                    'member_participation'],
+                    'member_participation', 'comparative_groups', 'comparative_periods'],
     // show date range filter
-    date_filter:   ['meeting'],
+    date_filter:   ['meeting', 'comparative_groups'],
+    // report types that require a single group to be selected
+    group_required: ['comparative_periods'],
 };
 
 function loadMembers(groupId) {
@@ -161,11 +169,25 @@ $('#report_type').on('change', function() {
     if (!FILTER_MAP.year_filter.includes(type))  $('[name="year"]').val('');
 
     if (FILTER_MAP.member_filter.includes(type)) loadMembers($('#group_id').val());
+
+    const groupRequired = FILTER_MAP.group_required.includes(type);
+    $('#group_id').prop('required', groupRequired);
+    $('#group_id option[value=""]').text(groupRequired ? '-- Seleccionar grupo --' : '-- Todos los grupos --');
 }).trigger('change');
 
 $('#group_id').on('change', function() {
     const type = $('#report_type').val();
     if (FILTER_MAP.member_filter.includes(type)) loadMembers($(this).val());
+});
+
+// select2 hides the native select, so the browser cannot show the
+// required-field bubble; block submission explicitly instead.
+$('#report-form, form[action*="reports"]').first().on('submit', function(e) {
+    const type = $('#report_type').val();
+    if (FILTER_MAP.group_required.includes(type) && !$('#group_id').val()) {
+        e.preventDefault();
+        alert('Debe seleccionar un grupo para este reporte.');
+    }
 });
 </script>
 @endpush

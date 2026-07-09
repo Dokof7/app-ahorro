@@ -45,6 +45,8 @@ class GroupReportExport implements WithMultipleSheets
             'member_participation' => [new MemberParticipationSheet($this->data)],
             'fines_generated'      => [new FinesGeneratedSheet($this->data)],
             'fines_status'         => [new FinesStatusSheet($this->data)],
+            'comparative_groups'   => [new ComparativeGroupsSheet($this->data)],
+            'comparative_periods'  => [new ComparativePeriodsSheet($this->data)],
             default                => [],
         };
     }
@@ -575,5 +577,76 @@ class FinesStatusSheet implements FromCollection, WithHeadings, WithTitle, WithS
     public function styles(Worksheet $sheet): array
     {
         return [1 => ['font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']], 'fill' => ['fillType' => 'solid', 'startColor' => ['argb' => 'FFB71C1C']]]];
+    }
+}
+
+
+// ──────────────────────────────────────────────────────────────
+// New sheets — Comparative
+// ──────────────────────────────────────────────────────────────
+
+class ComparativeGroupsSheet implements FromCollection, WithHeadings, WithTitle, WithStyles, ShouldAutoSize
+{
+    protected array $data;
+    public function __construct(array $data) { $this->data = $data; }
+    public function title(): string { return 'Comparativo de Grupos'; }
+    public function headings(): array
+    {
+        return ['GRUPO', 'MIEMBROS ACTIVOS', 'TOTAL AHORRADO', 'F. EMERGENCIA', 'MULTAS COBRADAS', 'PRÉSTAMOS OTORGADOS', 'PRÉSTAMOS RECUPERADOS', 'SALDO PENDIENTE', 'INTERESES COBRADOS', '% ASISTENCIA'];
+    }
+    public function collection(): Collection
+    {
+        $rows = collect();
+        foreach ($this->data['rows'] ?? [] as $row) {
+            $rows->push([
+                $row['group']->name,
+                $row['active_members'],
+                $row['total_savings'],
+                $row['total_emergency'],
+                $row['total_fines'],
+                $row['total_loans_out'],
+                $row['total_loans_recov'],
+                $row['total_loans_bal'],
+                $row['total_interest'],
+                $row['attendance_rate'] . '%',
+            ]);
+        }
+        return $rows;
+    }
+    public function styles(Worksheet $sheet): array
+    {
+        return [1 => ['font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']], 'fill' => ['fillType' => 'solid', 'startColor' => ['argb' => 'FF6A1B9A']]]];
+    }
+}
+
+
+class ComparativePeriodsSheet implements FromCollection, WithHeadings, WithTitle, WithStyles, ShouldAutoSize
+{
+    protected array $data;
+    public function __construct(array $data) { $this->data = $data; }
+    public function title(): string { return 'Comparativo de Períodos'; }
+    public function headings(): array
+    {
+        return ['PERÍODO', 'AHORROS', 'MULTAS COBRADAS', 'PRÉSTAMOS OTORGADOS', 'PAGOS DE PRÉSTAMOS', '% ASISTENCIA', 'VARIACIÓN AHORROS'];
+    }
+    public function collection(): Collection
+    {
+        $rows = collect();
+        foreach ($this->data['periods'] ?? [] as $row) {
+            $rows->push([
+                $row['label'],
+                $row['savings'],
+                $row['fines'],
+                $row['loans_out'],
+                $row['loan_payments'],
+                $row['attendance_rate'] . '%',
+                $row['savings_delta'] === null ? '—' : $row['savings_delta'] . '%',
+            ]);
+        }
+        return $rows;
+    }
+    public function styles(Worksheet $sheet): array
+    {
+        return [1 => ['font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']], 'fill' => ['fillType' => 'solid', 'startColor' => ['argb' => 'FF1565C0']]]];
     }
 }
