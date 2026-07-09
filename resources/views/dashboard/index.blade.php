@@ -44,7 +44,7 @@
 </div>
 
 <div class="row">
-    <div class="col-md-2 col-sm-4 col-6">
+    <div class="col-xl-3 col-md-4 col-sm-6 col-12">
         <div class="info-box">
             <span class="info-box-icon bg-success elevation-1"><i class="fas fa-piggy-bank"></i></span>
             <div class="info-box-content">
@@ -53,7 +53,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-2 col-sm-4 col-6">
+    <div class="col-xl-3 col-md-4 col-sm-6 col-12">
         <div class="info-box">
             <span class="info-box-icon bg-info elevation-1"><i class="fas fa-shield-alt"></i></span>
             <div class="info-box-content">
@@ -62,7 +62,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-2 col-sm-4 col-6">
+    <div class="col-xl-3 col-md-4 col-sm-6 col-12">
         <div class="info-box">
             <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-gavel"></i></span>
             <div class="info-box-content">
@@ -71,7 +71,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-2 col-sm-4 col-6">
+    <div class="col-xl-3 col-md-4 col-sm-6 col-12">
         <div class="info-box">
             <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-hand-holding-usd"></i></span>
             <div class="info-box-content">
@@ -80,7 +80,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-2 col-sm-4 col-6">
+    <div class="col-xl-3 col-md-4 col-sm-6 col-12">
         <div class="info-box">
             <span class="info-box-icon bg-success elevation-1"><i class="fas fa-check-circle"></i></span>
             <div class="info-box-content">
@@ -89,7 +89,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-2 col-sm-4 col-6">
+    <div class="col-xl-3 col-md-4 col-sm-6 col-12">
         <div class="info-box">
             <span class="info-box-icon bg-secondary elevation-1"><i class="fas fa-university"></i></span>
             <div class="info-box-content">
@@ -98,7 +98,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-2 col-sm-4 col-6">
+    <div class="col-xl-3 col-md-4 col-sm-6 col-12">
         <div class="info-box">
             <span class="info-box-icon bg-purple elevation-1" style="background-color:#6f42c1!important"><i class="fas fa-id-card"></i></span>
             <div class="info-box-content">
