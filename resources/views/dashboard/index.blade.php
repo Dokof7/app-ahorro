@@ -107,6 +107,15 @@
             </div>
         </div>
     </div>
+    <div class="col-xl-3 col-md-4 col-sm-6 col-12">
+        <div class="info-box">
+            <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-calendar-check"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">Recaudado por Actividades</span>
+                <span class="info-box-number">Bs. {{ number_format($stats['activities_raised'] ?? 0, 2) }}</span>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="row">

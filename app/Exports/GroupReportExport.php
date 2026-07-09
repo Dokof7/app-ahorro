@@ -224,17 +224,17 @@ class FinancialSummarySheet implements FromCollection, WithHeadings, WithTitle, 
     public function title(): string { return 'Resumen Financiero'; }
     public function headings(): array
     {
-        return ['GRUPO', 'TOTAL AHORRADO', 'F. EMERGENCIA', 'MULTAS COBRADAS', 'PRÉSTAMOS RECUPERADOS', 'INTERESES', 'SUBTOTAL INGRESOS', 'PRÉSTAMOS OTORGADOS', 'GASTOS BANCARIOS', 'SUBTOTAL EGRESOS', 'TOTAL GENERAL', 'SALDO DISPONIBLE'];
+        return ['GRUPO', 'TOTAL AHORRADO', 'F. EMERGENCIA', 'MULTAS COBRADAS', 'PRÉSTAMOS RECUPERADOS', 'INTERESES', 'ACTIVIDADES', 'SUBTOTAL INGRESOS', 'PRÉSTAMOS OTORGADOS', 'GASTOS BANCARIOS', 'SUBTOTAL EGRESOS', 'TOTAL GENERAL', 'SALDO DISPONIBLE'];
     }
     public function collection(): Collection
     {
         $rows = collect();
         foreach ($this->data['summary'] ?? [] as $item) {
-            $rows->push([$item['group']->name, $item['total_savings'], $item['total_emergency'], $item['total_fines'], $item['total_loans_recov'], $item['total_interest'], $item['subtotal_income'], $item['total_loans_out'], $item['total_bank_expenses'], $item['subtotal_outflow'], $item['grand_total'], $item['available_balance']]);
+            $rows->push([$item['group']->name, $item['total_savings'], $item['total_emergency'], $item['total_fines'], $item['total_loans_recov'], $item['total_interest'], $item['total_activities'] ?? 0, $item['subtotal_income'], $item['total_loans_out'], $item['total_bank_expenses'], $item['subtotal_outflow'], $item['grand_total'], $item['available_balance']]);
         }
         if (!empty($this->data['consolidated'])) {
             $c = $this->data['consolidated'];
-            $rows->push(['TOTAL CONSOLIDADO', '', '', '', '', '', $c['subtotal_income'], '', '', $c['subtotal_outflow'], $c['grand_total'], $c['available_balance']]);
+            $rows->push(['TOTAL CONSOLIDADO', '', '', '', '', '', '', $c['subtotal_income'], '', '', $c['subtotal_outflow'], $c['grand_total'], $c['available_balance']]);
         }
         return $rows;
     }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Activity;
 use App\Models\BankExpense;
 use App\Models\Group;
 use App\Models\Member;
@@ -41,6 +42,7 @@ class DashboardController extends Controller
             'loans_overdue'         => Loan::whereIn('group_id', $groupIds)->where('status', 'overdue')->count(),
             'loans_overdue_balance' => Loan::whereIn('group_id', $groupIds)->where('status', 'overdue')->sum('balance'),
             'bank_expenses'         => BankExpense::whereIn('group_id', $groupIds)->sum('amount'),
+            'activities_raised'     => Activity::whereIn('group_id', $groupIds)->sum('amount_raised'),
             'total_membership'      => Member::whereIn('group_id', $groupIds)
                                         ->where('membership_paid', true)
                                         ->join('groups', 'members.group_id', '=', 'groups.id')

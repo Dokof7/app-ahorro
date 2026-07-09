@@ -177,7 +177,7 @@ class ReportController extends Controller
     private function financialSummaryReport(array $filters, $groupIds): array
     {
         $groupQuery = Group::whereIn('id', $groupIds)
-            ->with(['members', 'meetings.contributions', 'meetings.totals', 'meetings.fines', 'meetings.loans', 'meetings.loanPayments', 'meetings.bankExpenses']);
+            ->with(['members', 'activities', 'meetings.contributions', 'meetings.totals', 'meetings.fines', 'meetings.loans', 'meetings.loanPayments', 'meetings.bankExpenses']);
         if (!empty($filters['group_id'])) $groupQuery->where('id', $filters['group_id']);
         $groups = $groupQuery->get();
 
@@ -196,7 +196,9 @@ class ReportController extends Controller
             $lastSummary       = $group->meetings->sortByDesc('meeting_number')->first()?->summary;
             $availableBalance  = $lastSummary?->total_group_funds ?? 0;
 
-            $subtotalIncome  = $totalSavings + $totalEmergency + $totalFines + $totalLoansRecov + $totalInterest;
+            $totalActivities = $group->activities->sum('amount_raised');
+
+            $subtotalIncome  = $totalSavings + $totalEmergency + $totalFines + $totalLoansRecov + $totalInterest + $totalActivities;
             $subtotalOutflow = $totalLoansOut + $totalBankExpenses;
 
             $summary[] = [
@@ -208,6 +210,7 @@ class ReportController extends Controller
                 'total_loans_recov'  => $totalLoansRecov,
                 'total_bank_expenses'=> $totalBankExpenses,
                 'total_interest'     => $totalInterest,
+                'total_activities'   => $totalActivities,
                 'available_balance'  => $availableBalance,
                 'subtotal_income'    => $subtotalIncome,
                 'subtotal_outflow'   => $subtotalOutflow,

@@ -36,6 +36,7 @@
             <tr><td>Total de Multas Cobradas</td><td>Bs. {{ number_format($item['total_fines'], 2) }}</td></tr>
             <tr><td>Total Recuperado de Préstamos</td><td>Bs. {{ number_format($item['total_loans_recov'], 2) }}</td></tr>
             <tr><td>Intereses Generados</td><td>Bs. {{ number_format($item['total_interest'], 2) }}</td></tr>
+            <tr><td>Recaudado por Actividades</td><td>Bs. {{ number_format($item['total_activities'] ?? 0, 2) }}</td></tr>
             <tr class="subtotal"><td>Subtotal Ingresos</td><td>Bs. {{ number_format($item['subtotal_income'], 2) }}</td></tr>
 
             <tr class="section-header"><td colspan="2">EGRESOS</td></tr>
