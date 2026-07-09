@@ -1808,3 +1808,381 @@ body.dark-mode .nav-pills .nav-link {
 body.dark-mode .sidebar-mini .main-sidebar:hover {
     box-shadow: 4px 0 12px rgba(0, 0, 0, 0.40) !important;
 }
+
+/* ============================================================
+   TABLES v2 — full Filament v3 table aesthetic
+   Extends/refines the base ".table thead th / tbody" rules above
+   (~L563-593) with: thead-dark/thead-light neutralization, roomier
+   Filament-style padding, softened striped/bordered variants,
+   tfoot summary-row styling, table-responsive corner fix inside
+   cards, and DataTables (Yajra Bootstrap4) input/pagination styling.
+   Light rules first, body.dark-mode parity block at the end.
+   ============================================================ */
+
+/* ---- thead: neutralize AdminLTE's thead-dark/thead-light, Filament look ---- */
+.table thead th,
+.table thead.thead-dark th,
+.table > thead.thead-dark > tr > th,
+.table thead.thead-light th {
+    background-color: var(--tf-gray-50) !important;
+    color: var(--tf-gray-500) !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    border: none !important;
+    border-bottom: 1px solid var(--tf-gray-200) !important;
+    padding: 0.75rem 1rem !important;
+    vertical-align: middle !important;
+}
+
+/* thead-dark ships with a border-color utility on <thead>; strip it */
+.table thead.thead-dark,
+.table > thead.thead-dark {
+    border-color: var(--tf-gray-200) !important;
+}
+
+/* ---- tbody: comfortable padding + hairline row dividers ---- */
+.table tbody tr {
+    border-bottom: 1px solid var(--tf-gray-100) !important;
+    transition: background-color 0.15s ease !important;
+}
+
+.table tbody tr:last-child {
+    border-bottom: none !important;
+}
+
+.table tbody td {
+    padding: 0.85rem 1rem !important;
+    vertical-align: middle !important;
+    color: var(--tf-gray-700) !important;
+    border-top: none !important;
+    font-size: 0.875rem !important;
+}
+
+/* ---- table-hover: subtle gray-50 wash ---- */
+.table-hover tbody tr:hover {
+    background-color: var(--tf-gray-50) !important;
+}
+
+/* ---- table-striped: soften to a barely-there stripe ---- */
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: var(--tf-gray-50) !important;
+}
+
+.table-striped.table-hover tbody tr:nth-of-type(odd):hover,
+.table-striped tbody tr:nth-of-type(odd):hover {
+    background-color: var(--tf-gray-100) !important;
+}
+
+/* ---- table-bordered: drop the heavy grid, keep hairline outer + header rule ---- */
+.table-bordered,
+.table-bordered thead th,
+.table-bordered tbody td,
+.table-bordered tfoot td,
+.table-bordered tfoot th {
+    border: none !important;
+}
+
+.table-bordered {
+    border: 1px solid var(--tf-gray-200) !important;
+    border-radius: var(--tf-radius) !important;
+}
+
+.table-bordered thead th {
+    border-bottom: 1px solid var(--tf-gray-200) !important;
+}
+
+.table-bordered tbody tr {
+    border-bottom: 1px solid var(--tf-gray-100) !important;
+}
+
+/* table-sm: tighter but still roomier than raw Bootstrap */
+.table-sm thead th {
+    padding: 0.5rem 0.75rem !important;
+}
+
+.table-sm tbody td {
+    padding: 0.5rem 0.75rem !important;
+}
+
+/* ---- tfoot: Filament summary-row treatment ---- */
+.table tfoot {
+    border-top: 2px solid var(--tf-gray-200) !important;
+}
+
+.table tfoot tr,
+.table tfoot tr.table-success,
+.table tfoot tr.table-warning,
+.table tfoot tr.table-info,
+.table tfoot tr.table-danger,
+.table tfoot tr.font-weight-bold {
+    background-color: var(--tf-gray-50) !important;
+}
+
+.table tfoot td,
+.table tfoot th {
+    padding: 0.85rem 1rem !important;
+    font-weight: 600 !important;
+    color: var(--tf-gray-900) !important;
+    border-top: none !important;
+    border-bottom: none !important;
+    vertical-align: middle !important;
+}
+
+/* Keep a subtle brand tint on contextual tfoot rows instead of solid Bootstrap colors */
+.table tfoot tr.table-success td {
+    background-color: var(--tf-success-soft) !important;
+    color: var(--tf-success-dark) !important;
+}
+
+.table tfoot tr.table-warning td {
+    background-color: var(--tf-warning-soft) !important;
+    color: var(--tf-warning-dark) !important;
+}
+
+.table tfoot tr.table-info td {
+    background-color: var(--tf-info-soft) !important;
+    color: var(--tf-info-dark) !important;
+}
+
+.table tfoot tr.table-danger td {
+    background-color: var(--tf-danger-soft) !important;
+    color: var(--tf-danger-dark) !important;
+}
+
+/* ---- table-responsive inside cards: keep rounded corners flush ---- */
+.card > .table-responsive,
+.card-body.table-responsive,
+.card-body.p-0 > .table-responsive {
+    border-radius: 0 0 var(--tf-radius-lg) var(--tf-radius-lg) !important;
+    overflow: hidden !important;
+}
+
+.card > .table-responsive > .table,
+.card-body.table-responsive > .table,
+.card-body.p-0 > .table-responsive > .table {
+    margin-bottom: 0 !important;
+}
+
+/* ---- DataTables (Yajra Bootstrap4 wrapper): Filament inputs + pagination ---- */
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select {
+    border-radius: var(--tf-radius-lg) !important;
+    border: 1px solid var(--tf-gray-300) !important;
+    box-shadow: var(--tf-shadow-sm) !important;
+    padding: 0.4rem 0.75rem !important;
+    color: var(--tf-gray-700) !important;
+}
+
+.dataTables_wrapper .dataTables_filter input:focus,
+.dataTables_wrapper .dataTables_length select:focus {
+    border-color: var(--tf-primary) !important;
+    box-shadow: 0 0 0 3px var(--tf-primary-ring) !important;
+    outline: none !important;
+}
+
+.dataTables_wrapper .dataTables_filter label,
+.dataTables_wrapper .dataTables_length label {
+    color: var(--tf-gray-500) !important;
+    font-weight: 500 !important;
+    font-size: 0.875rem !important;
+}
+
+.dataTables_wrapper .dataTables_info {
+    color: var(--tf-gray-500) !important;
+    font-size: 0.8125rem !important;
+    padding-top: 0.75rem !important;
+}
+
+/* Pagination pills: rounded-md, white bg + ring, amber active */
+.dataTables_wrapper .dataTables_paginate {
+    padding-top: 0.5rem !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button,
+.dataTables_wrapper .pagination .page-link {
+    border-radius: var(--tf-radius) !important;
+    border: 1px solid var(--tf-gray-200) !important;
+    color: var(--tf-gray-700) !important;
+    background: #ffffff !important;
+    padding: 0.35rem 0.75rem !important;
+    margin-left: 3px !important;
+    box-shadow: none !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover,
+.dataTables_wrapper .pagination .page-item:not(.active):not(.disabled) .page-link:hover {
+    background: var(--tf-gray-50) !important;
+    color: var(--tf-gray-900) !important;
+    border-color: var(--tf-gray-300) !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover,
+.dataTables_wrapper .pagination .page-item.active .page-link {
+    background: var(--tf-primary) !important;
+    border-color: var(--tf-primary) !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover,
+.dataTables_wrapper .pagination .page-item.disabled .page-link {
+    color: var(--tf-gray-400) !important;
+    background: #ffffff !important;
+    border-color: var(--tf-gray-200) !important;
+}
+
+/* ============================================================
+   TABLES v2 — DARK MODE parity
+   ============================================================ */
+
+/* ---- thead ---- */
+body.dark-mode .table thead th,
+body.dark-mode .table thead.thead-dark th,
+body.dark-mode .table > thead.thead-dark > tr > th,
+body.dark-mode .table thead.thead-light th {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+    color: #9ca3af !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .table thead.thead-dark,
+body.dark-mode .table > thead.thead-dark {
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ---- tbody ---- */
+body.dark-mode .table tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+body.dark-mode .table tbody tr:last-child {
+    border-bottom: none !important;
+}
+
+body.dark-mode .table tbody td {
+    color: #d1d5db !important;
+    border-top: none !important;
+}
+
+body.dark-mode .table-hover tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+body.dark-mode .table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+body.dark-mode .table-striped.table-hover tbody tr:nth-of-type(odd):hover,
+body.dark-mode .table-striped tbody tr:nth-of-type(odd):hover {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* ---- table-bordered ---- */
+body.dark-mode .table-bordered,
+body.dark-mode .table-bordered thead th,
+body.dark-mode .table-bordered tbody td,
+body.dark-mode .table-bordered tfoot td,
+body.dark-mode .table-bordered tfoot th {
+    border: none !important;
+}
+
+body.dark-mode .table-bordered {
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .table-bordered thead th {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-mode .table-bordered tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+/* ---- tfoot ---- */
+body.dark-mode .table tfoot {
+    border-top: 2px solid rgba(255, 255, 255, 0.10) !important;
+}
+
+body.dark-mode .table tfoot tr,
+body.dark-mode .table tfoot tr.table-success,
+body.dark-mode .table tfoot tr.table-warning,
+body.dark-mode .table tfoot tr.table-info,
+body.dark-mode .table tfoot tr.table-danger,
+body.dark-mode .table tfoot tr.font-weight-bold {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+body.dark-mode .table tfoot td,
+body.dark-mode .table tfoot th {
+    color: #f9fafb !important;
+    border-top: none !important;
+    border-bottom: none !important;
+}
+
+body.dark-mode .table tfoot tr.table-success td {
+    background-color: rgba(74, 222, 128, 0.08) !important;
+    color: #4ade80 !important;
+}
+
+body.dark-mode .table tfoot tr.table-warning td {
+    background-color: rgba(251, 191, 36, 0.08) !important;
+    color: #fbbf24 !important;
+}
+
+body.dark-mode .table tfoot tr.table-info td {
+    background-color: rgba(56, 189, 248, 0.08) !important;
+    color: #38bdf8 !important;
+}
+
+body.dark-mode .table tfoot tr.table-danger td {
+    background-color: rgba(248, 113, 113, 0.08) !important;
+    color: #f87171 !important;
+}
+
+/* ---- DataTables controls ---- */
+body.dark-mode .dataTables_wrapper .dataTables_filter input,
+body.dark-mode .dataTables_wrapper .dataTables_length select {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    color: #e5e7eb !important;
+}
+
+body.dark-mode .dataTables_wrapper .dataTables_filter input:focus,
+body.dark-mode .dataTables_wrapper .dataTables_length select:focus {
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.35) !important;
+}
+
+body.dark-mode .dataTables_wrapper .dataTables_paginate .paginate_button,
+body.dark-mode .dataTables_wrapper .pagination .page-link {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    color: #9ca3af !important;
+}
+
+body.dark-mode .dataTables_wrapper .dataTables_paginate .paginate_button:hover,
+body.dark-mode .dataTables_wrapper .pagination .page-item:not(.active):not(.disabled) .page-link:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #f9fafb !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+body.dark-mode .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+body.dark-mode .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover,
+body.dark-mode .dataTables_wrapper .pagination .page-item.active .page-link {
+    background: #f59e0b !important;
+    border-color: #f59e0b !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+body.dark-mode .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover,
+body.dark-mode .dataTables_wrapper .pagination .page-item.disabled .page-link {
+    color: #4b5563 !important;
+    background: transparent !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
+}

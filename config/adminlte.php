@@ -475,7 +475,7 @@ return [
                 [
                     'type'     => 'css',
                     'asset'    => false,
-                    'location' => '/css/theme-filament.css?v=2',
+                    'location' => '/css/theme-filament.css?v=3',
                 ],
             ],
         ],

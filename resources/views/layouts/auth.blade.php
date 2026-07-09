@@ -32,7 +32,7 @@
     <!-- Inter (Filament theme) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Filament theme overrides -->
-    <link rel="stylesheet" href="{{ asset('css/theme-filament.css') }}?v=2">
+    <link rel="stylesheet" href="{{ asset('css/theme-filament.css') }}?v=3">
 
     <style>
         /* Theme toggle button (login page) */
