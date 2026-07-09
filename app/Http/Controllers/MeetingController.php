@@ -135,11 +135,29 @@ class MeetingController extends Controller
 
         foreach ($missingMembers as $member) {
             Attendance::create(['meeting_id' => $meeting->id, 'member_id' => $member->id]);
-            if (!$isPartial) {
-                MeetingContribution::firstOrCreate(
-                    ['meeting_id' => $meeting->id, 'member_id' => $member->id],
-                    ['shares' => 0, 'emergency_fund' => 0, 'fine' => 0, 'confirmed' => false]
-                );
+        }
+
+        if (!$isPartial) {
+            // Bulk insert bypasses model events on purpose: these rows are all
+            // zeros, so no summary changes and no recalculation cascade per row.
+            $missingContributionIds = Member::where('group_id', $meeting->group_id)
+                ->where('status', 'active')
+                ->whereNotIn('id', $meeting->contributions()->pluck('member_id'))
+                ->pluck('id');
+            if ($missingContributionIds->isNotEmpty()) {
+                $now = now();
+                MeetingContribution::insert($missingContributionIds->map(fn ($memberId) => [
+                    'meeting_id'     => $meeting->id,
+                    'member_id'      => $memberId,
+                    'shares'         => 0,
+                    'savings'        => 0,
+                    'emergency_fund' => 0,
+                    'fine'           => 0,
+                    'total'          => 0,
+                    'confirmed'      => false,
+                    'created_at'     => $now,
+                    'updated_at'     => $now,
+                ])->all());
             }
         }
 

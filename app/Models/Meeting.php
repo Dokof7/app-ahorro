@@ -78,7 +78,7 @@ class Meeting extends Model
         return $this->bankExpenses()->sum('amount');
     }
 
-    public function recalculateSummary()
+    public function recalculateSummary(bool $cascade = true)
     {
         $previousMeeting = Meeting::where('group_id', $this->group_id)
             ->where('meeting_number', '<', $this->meeting_number)
@@ -107,5 +107,16 @@ class Meeting extends Model
                 'bank_expenses_total'   => $bankExpenses,
             ]
         );
+
+        // total_group_funds chains across meetings via previous_total, so a
+        // change in this meeting invalidates every later summary. Each next
+        // meeting cascades in turn until the last one.
+        if ($cascade) {
+            Meeting::where('group_id', $this->group_id)
+                ->where('meeting_number', '>', $this->meeting_number)
+                ->orderBy('meeting_number')
+                ->first()
+                ?->recalculateSummary();
+        }
     }
 }
