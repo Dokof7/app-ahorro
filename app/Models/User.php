@@ -51,6 +51,29 @@ class User extends Authenticatable
 
     public function canEdit() { return !$this->hasRole(['observador', 'miembro']); }
 
+    /**
+     * Group ids this user is currently scoped to, honoring the active-group
+     * session selection for admin and admin_grupo roles.
+     */
+    public function activeGroupIds()
+    {
+        if ($this->isAdmin()) {
+            $activeGroupId = session('active_group_id');
+            return $activeGroupId ? collect([$activeGroupId]) : Group::pluck('id');
+        }
+
+        if ($this->isAdminGrupo()) {
+            $myGroupIds = $this->groups()->pluck('groups.id');
+            $activeGroupId = session('active_group_id');
+            if ($activeGroupId && $myGroupIds->contains($activeGroupId)) {
+                return collect([$activeGroupId]);
+            }
+            return $myGroupIds;
+        }
+
+        return $this->groups()->pluck('groups.id');
+    }
+
     public function getRoleAttribute(): string
     {
         return $this->getRoleNames()->first() ?? '';

@@ -17,9 +17,7 @@ class MemberController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $groupIds = auth()->user()->isAdmin()
-                ? Group::pluck('id')
-                : auth()->user()->groups()->pluck('groups.id');
+            $groupIds = auth()->user()->activeGroupIds();
 
             $query = Member::with('group')->whereIn('group_id', $groupIds);
             if ($request->group_id) $query->where('group_id', $request->group_id);
@@ -37,15 +35,13 @@ class MemberController extends Controller
                 ->make(true);
         }
 
-        $groups = auth()->user()->isAdmin() ? Group::all() : auth()->user()->groups()->get();
+        $groups = Group::whereIn('id', auth()->user()->activeGroupIds())->get();
         return view('members.index', compact('groups'));
     }
 
     public function create()
     {
-        $groups = auth()->user()->isAdmin()
-            ? Group::where('status', 'active')->get()
-            : auth()->user()->groups()->where('status', 'active')->get();
+        $groups = Group::whereIn('id', auth()->user()->activeGroupIds())->where('status', 'active')->get();
         return view('members.create', compact('groups'));
     }
 
@@ -131,7 +127,7 @@ class MemberController extends Controller
     public function edit(Member $member)
     {
         $this->authorize('update', $member);
-        $groups = auth()->user()->isAdmin() ? Group::all() : auth()->user()->groups()->get();
+        $groups = Group::whereIn('id', auth()->user()->activeGroupIds())->get();
         return view('members.edit', compact('member', 'groups'));
     }
 

@@ -27,11 +27,11 @@ Auth::routes();
 
 Route::middleware('auth')->group(function () {
 
-    // Group selector – admin only, no group required
-    Route::get('group-selector',        [GroupSelectorController::class, 'index'])->name('group.selector')->middleware('admin');
-    Route::get('group-selector/search', [GroupSelectorController::class, 'search'])->name('group.selector.search')->middleware('admin');
-    Route::post('group-selector/select',[GroupSelectorController::class, 'select'])->name('group.selector.select')->middleware('admin');
-    Route::post('group-selector/clear', [GroupSelectorController::class, 'clear'])->name('group.selector.clear')->middleware('admin');
+    // Group selector – admin and admin_grupo, no group required
+    Route::get('group-selector',        [GroupSelectorController::class, 'index'])->name('group.selector')->middleware('role:admin,admin_grupo');
+    Route::get('group-selector/search', [GroupSelectorController::class, 'search'])->name('group.selector.search')->middleware('role:admin,admin_grupo');
+    Route::post('group-selector/select',[GroupSelectorController::class, 'select'])->name('group.selector.select')->middleware('role:admin,admin_grupo');
+    Route::post('group-selector/clear', [GroupSelectorController::class, 'clear'])->name('group.selector.clear')->middleware('role:admin,admin_grupo');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard')->middleware('group.selected');
     Route::get('/home', [DashboardController::class, 'index'])->name('home')->middleware('group.selected');

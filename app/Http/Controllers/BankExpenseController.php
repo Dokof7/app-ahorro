@@ -13,9 +13,7 @@ class BankExpenseController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $groupIds = auth()->user()->isAdmin()
-                ? Group::pluck('id')
-                : auth()->user()->groups()->pluck('groups.id');
+            $groupIds = auth()->user()->activeGroupIds();
 
             $query = BankExpense::with(['group', 'meeting'])->whereIn('group_id', $groupIds);
 
@@ -25,13 +23,13 @@ class BankExpenseController extends Controller
                 ->make(true);
         }
 
-        $groups = auth()->user()->isAdmin() ? Group::all() : auth()->user()->groups()->get();
+        $groups = Group::whereIn('id', auth()->user()->activeGroupIds())->get();
         return view('bank_expenses.index', compact('groups'));
     }
 
     public function create()
     {
-        $groups = auth()->user()->isAdmin() ? Group::all() : auth()->user()->groups()->get();
+        $groups = Group::whereIn('id', auth()->user()->activeGroupIds())->get();
         $selectedMeeting = request()->meeting_id ? Meeting::find(request()->meeting_id) : null;
         return view('bank_expenses.create', compact('groups', 'selectedMeeting'));
     }

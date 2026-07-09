@@ -17,9 +17,7 @@ class MeetingController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $groupIds = auth()->user()->isAdmin()
-                ? Group::pluck('id')
-                : auth()->user()->groups()->pluck('groups.id');
+            $groupIds = auth()->user()->activeGroupIds();
 
             $query = Meeting::with(['group', 'totals'])->whereIn('group_id', $groupIds);
 
@@ -43,9 +41,7 @@ class MeetingController extends Controller
                 ->make(true);
         }
 
-        $groups = auth()->user()->isAdmin()
-            ? Group::all()
-            : auth()->user()->groups()->get();
+        $groups = Group::whereIn('id', auth()->user()->activeGroupIds())->get();
 
         return view('meetings.index', compact('groups'));
     }
@@ -54,13 +50,11 @@ class MeetingController extends Controller
     {
         $user = auth()->user();
 
-        $groups = $user->isAdmin()
-            ? Group::where('status', 'active')->get()
-            : $user->groups()->where('status', 'active')->get();
+        $groups = Group::whereIn('id', $user->activeGroupIds())->where('status', 'active')->get();
 
         if ($request->group_id) {
             $selectedGroup = Group::find($request->group_id);
-        } elseif ($user->isAdmin() && session('active_group_id')) {
+        } elseif (($user->isAdmin() || $user->isAdminGrupo()) && session('active_group_id')) {
             $selectedGroup = Group::find(session('active_group_id'));
         } else {
             $selectedGroup = $groups->first();
@@ -178,7 +172,7 @@ class MeetingController extends Controller
         if ($meeting->isClosed()) {
             return back()->with('error', 'No se puede editar una reunión cerrada.');
         }
-        $groups = auth()->user()->isAdmin() ? Group::all() : auth()->user()->groups()->get();
+        $groups = Group::whereIn('id', auth()->user()->activeGroupIds())->get();
         return view('meetings.edit', compact('meeting', 'groups'));
     }
 

@@ -13,12 +13,14 @@
             </nav>
         </div>
         <div class="d-flex align-items-center">
-            @can('admin')
+            @php $__gaUser = auth()->user(); @endphp
+            @if($__gaUser && ($__gaUser->isAdmin() || $__gaUser->isAdminGrupo()))
                 @if(session('active_group_id'))
                 <span class="badge badge-success px-3 py-2 mr-2" style="font-size:0.85rem;">
                     <i class="fas fa-users-cog mr-1"></i>
                     {{ session('active_group_name') }}
                 </span>
+                @if($__gaUser->isAdmin() || $__gaUser->groups()->count() > 1)
                 <form action="{{ route('group.selector.clear') }}" method="POST" class="d-inline mr-3">
                     @csrf
                     <button type="submit" class="btn btn-sm btn-outline-warning">
@@ -26,7 +28,8 @@
                     </button>
                 </form>
                 @endif
-            @endcan
+                @endif
+            @endif
             @yield('page_actions')
         </div>
     </div>
