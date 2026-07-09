@@ -24,6 +24,7 @@ class Group extends Model
     public function meetings() { return $this->hasMany(Meeting::class)->orderBy('meeting_number'); }
     public function loans() { return $this->hasMany(Loan::class); }
     public function bankExpenses() { return $this->hasMany(BankExpense::class); }
+    public function activities() { return $this->hasMany(Activity::class); }
 
     public function isPartial(): bool { return $this->registration_mode === 'partial'; }
 

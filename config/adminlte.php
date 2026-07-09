@@ -350,6 +350,11 @@ return [
             'route' => 'bank-expenses.index',
             'icon'  => 'fas fa-fw fa-university',
         ],
+        [
+            'text'  => 'Actividades',
+            'route' => 'activities.index',
+            'icon'  => 'fas fa-fw fa-calendar-check',
+        ],
 
         ['header' => 'REPORTES'],
 

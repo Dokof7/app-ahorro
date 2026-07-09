@@ -12,6 +12,7 @@ use App\Http\Controllers\LoanController;
 use App\Http\Controllers\LoanPaymentController;
 use App\Http\Controllers\FineController;
 use App\Http\Controllers\BankExpenseController;
+use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\GroupSelectorController;
@@ -50,6 +51,7 @@ Route::middleware('auth')->group(function () {
         Route::get('bank-expenses/meetings/{groupId}',[BankExpenseController::class,'getMeetingsByGroup'])->name('bank-expenses.meetings');
         Route::resource('fines',         FineController::class)->only(['index']);
         Route::resource('bank-expenses', BankExpenseController::class)->only(['index']);
+        Route::resource('activities',    ActivityController::class)->only(['index']);
         Route::get('reports',             [ReportController::class, 'index'])->name('reports.index');
         Route::post('reports/generate',   [ReportController::class, 'generate'])->name('reports.generate');
         Route::get('reports/members/{group}', [ReportController::class, 'membersByGroup'])->name('reports.members');
@@ -111,6 +113,10 @@ Route::middleware('auth')->group(function () {
         Route::get('bank-expenses/new', [BankExpenseController::class, 'create'])->name('bank-expenses.create');
         Route::resource('bank-expenses', BankExpenseController::class)->only(['store', 'edit', 'update']);
 
+        // Activities write
+        Route::get('activities/new', [ActivityController::class, 'create'])->name('activities.create');
+        Route::resource('activities', ActivityController::class)->only(['store', 'edit', 'update']);
+
         // Meeting scheduled dates write
         Route::post('meeting-scheduled-dates',           [MeetingScheduledDateController::class, 'store'])->name('meeting-scheduled-dates.store');
         Route::delete('meeting-scheduled-dates/{scheduledDate}', [MeetingScheduledDateController::class, 'destroy'])->name('meeting-scheduled-dates.destroy');
@@ -124,6 +130,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('loan-payments/{loanPayment}',[LoanPaymentController::class,'destroy'])->name('loan-payments.destroy');
         Route::delete('fines/{fine}',               [FineController::class,       'destroy'])->name('fines.destroy');
         Route::delete('bank-expenses/{bankExpense}',[BankExpenseController::class,'destroy'])->name('bank-expenses.destroy');
+        Route::delete('activities/{activity}',      [ActivityController::class,   'destroy'])->name('activities.destroy');
     });
 
     // Users – admin only
