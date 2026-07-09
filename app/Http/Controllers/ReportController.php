@@ -196,6 +196,9 @@ class ReportController extends Controller
             $lastSummary       = $group->meetings->sortByDesc('meeting_number')->first()?->summary;
             $availableBalance  = $lastSummary?->total_group_funds ?? 0;
 
+            $subtotalIncome  = $totalSavings + $totalEmergency + $totalFines + $totalLoansRecov + $totalInterest;
+            $subtotalOutflow = $totalLoansOut + $totalBankExpenses;
+
             $summary[] = [
                 'group'              => $group,
                 'total_savings'      => $totalSavings,
@@ -206,10 +209,23 @@ class ReportController extends Controller
                 'total_bank_expenses'=> $totalBankExpenses,
                 'total_interest'     => $totalInterest,
                 'available_balance'  => $availableBalance,
+                'subtotal_income'    => $subtotalIncome,
+                'subtotal_outflow'   => $subtotalOutflow,
+                'grand_total'        => $subtotalIncome - $subtotalOutflow,
             ];
         }
 
-        return ['summary' => $summary, 'filters' => $filters];
+        $consolidated = null;
+        if (count($summary) > 1) {
+            $consolidated = [
+                'subtotal_income'   => array_sum(array_column($summary, 'subtotal_income')),
+                'subtotal_outflow'  => array_sum(array_column($summary, 'subtotal_outflow')),
+                'grand_total'       => array_sum(array_column($summary, 'grand_total')),
+                'available_balance' => array_sum(array_column($summary, 'available_balance')),
+            ];
+        }
+
+        return ['summary' => $summary, 'consolidated' => $consolidated, 'filters' => $filters];
     }
 
     private function savingsEvolutionReport(array $filters, $groupIds): array
