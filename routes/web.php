@@ -6,6 +6,7 @@ use App\Http\Controllers\GroupController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\ContributionController;
+use App\Http\Controllers\MeetingTotalController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\LoanPaymentController;
@@ -91,6 +92,8 @@ Route::middleware('auth')->group(function () {
             ->name('meetings.contributions.update');
         Route::post('meetings/{meeting}/contributions/bulk', [ContributionController::class, 'bulkUpdate'])
             ->name('meetings.contributions.bulk');
+        Route::put('meetings/{meeting}/totals', [MeetingTotalController::class, 'update'])
+            ->name('meetings.totals.update');
 
         // Loans write
         Route::get('loans/new', [LoanController::class, 'create'])->name('loans.create');

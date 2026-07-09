@@ -41,6 +41,7 @@ class GroupController extends Controller
             'default_shares'    => 'nullable|integer|min:1|max:25',
             'default_emergency' => 'nullable|numeric|min:0',
             'membership_fee'    => 'nullable|numeric|min:0',
+            'registration_mode' => 'required|in:full,partial',
         ]);
 
         $data['default_shares'] = $data['default_shares'] ?? null;
@@ -59,7 +60,7 @@ class GroupController extends Controller
         $stats = [
             'total_members'      => $group->members()->count(),
             'total_meetings'     => $group->meetings()->count(),
-            'total_savings'      => $group->meetings()->with('contributions')->get()->sum('total_savings'),
+            'total_savings'      => $group->meetings()->with(['contributions', 'group', 'totals'])->get()->sum('total_savings'),
             'pending_loans'      => $group->loans()->where('status', 'pending')->count(),
             'membership_paid'    => $group->members()->where('membership_paid', true)->count(),
         ];
@@ -69,7 +70,8 @@ class GroupController extends Controller
     public function edit(Group $group)
     {
         $this->authorize('update', $group);
-        return view('groups.edit', compact('group'));
+        $hasMeetings = $group->meetings()->exists();
+        return view('groups.edit', compact('group', 'hasMeetings'));
     }
 
     public function update(Request $request, Group $group)
@@ -84,11 +86,16 @@ class GroupController extends Controller
             'default_shares'    => 'nullable|integer|min:1|max:25',
             'default_emergency' => 'nullable|numeric|min:0',
             'membership_fee'    => 'nullable|numeric|min:0',
+            'registration_mode' => 'sometimes|in:full,partial',
         ]);
         $data['default_shares'] = $data['default_shares'] ?? null;
         $data['membership_fee'] = $data['membership_fee'] ?? 0;
-        $group->update($data);
-        return redirect()->route('groups.show', $group)->with('success', 'Grupo actualizado.');
+        try {
+            $group->update($data);
+            return redirect()->route('groups.show', $group)->with('success', 'Grupo actualizado.');
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     public function destroy(Group $group)

@@ -76,6 +76,79 @@
 <div class="tab-content card card-body rounded-0">
 
     <div class="tab-pane fade" id="contributions">
+        @if($meeting->group->isPartial())
+        <h5 class="mb-3">Totales de la Reunión</h5>
+        @php $totals = $meeting->totals; @endphp
+        @if($meeting->isOpen() && auth()->user()->canEdit())
+        <form action="{{ route('meetings.totals.update', $meeting) }}" method="POST" id="totalsForm">
+            @csrf
+            @method('PUT')
+            <div class="card card-outline card-success">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Total de Acciones</label>
+                                <input type="number" min="0" step="1" name="shares" id="totals-shares"
+                                    value="{{ old('shares', $totals->shares ?? 0) }}"
+                                    class="form-control @error('shares') is-invalid @enderror">
+                                @error('shares')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Total Ahorro (Bs.)</label>
+                                <input type="text" id="totals-savings-display" class="form-control" value="{{ number_format($totals->savings ?? 0, 2) }}" readonly>
+                                <small class="text-muted">Acciones × Bs. {{ number_format($meeting->group->share_value ?? 0, 2) }}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Total Fondo Emergencia (Bs.)</label>
+                                <input type="number" min="0" step="0.01" name="emergency_fund"
+                                    value="{{ old('emergency_fund', $totals->emergency_fund ?? 0) }}"
+                                    class="form-control @error('emergency_fund') is-invalid @enderror">
+                                @error('emergency_fund')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Total Multas (Bs.)</label>
+                                <input type="number" min="0" step="0.01" name="fine"
+                                    value="{{ old('fine', $totals->fine ?? 0) }}"
+                                    class="form-control @error('fine') is-invalid @enderror">
+                                @error('fine')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label>Observaciones</label>
+                                <input type="text" name="observations" value="{{ old('observations', $totals->observations ?? '') }}" class="form-control" placeholder="Observaciones...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-success"><i class="fas fa-save mr-1"></i>Guardar Totales</button>
+                </div>
+            </div>
+        </form>
+        @else
+        <div class="card card-outline card-secondary">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-sm-3"><strong>Total de Acciones:</strong></div><div class="col-sm-9">{{ $totals->shares ?? 0 }}</div>
+                    <div class="col-sm-3"><strong>Total Ahorro:</strong></div><div class="col-sm-9">Bs. {{ number_format($totals->savings ?? 0, 2) }}</div>
+                    <div class="col-sm-3"><strong>Total Fondo Emergencia:</strong></div><div class="col-sm-9">Bs. {{ number_format($totals->emergency_fund ?? 0, 2) }}</div>
+                    <div class="col-sm-3"><strong>Total Multas:</strong></div><div class="col-sm-9">Bs. {{ number_format($totals->fine ?? 0, 2) }}</div>
+                    @if($totals->observations ?? null)
+                    <div class="col-sm-3"><strong>Observaciones:</strong></div><div class="col-sm-9">{{ $totals->observations }}</div>
+                    @endif
+                </div>
+            </div>
+        </div>
+        @endif
+        @else
         <h5 class="mb-3">Control de Aportes por Miembro</h5>
         @if($meeting->isOpen() && auth()->user()->canEdit())
         <form action="{{ route('meetings.contributions.bulk', $meeting) }}" method="POST" id="contributionsForm">
@@ -156,6 +229,7 @@
             </table>
         </div>
         @endif
+        @endif
     </div>
 
     <div class="tab-pane fade show active" id="attendance">
@@ -227,10 +301,17 @@
         @php
             $attendedCount   = $meeting->attendances->whereIn('status', ['present', 'late'])->count();
             $totalMembers    = $meeting->attendances->count();
-            $totalShares     = $meeting->contributions->sum('shares');
-            $totalSavings    = $meeting->contributions->sum('savings');
-            $totalEmergency  = $meeting->contributions->sum('emergency_fund');
-            $totalFines      = $meeting->contributions->sum('fine');
+            if ($meeting->group->isPartial()) {
+                $totalShares     = $meeting->totals->shares ?? 0;
+                $totalSavings    = $meeting->totals->savings ?? 0;
+                $totalEmergency  = $meeting->totals->emergency_fund ?? 0;
+                $totalFines      = $meeting->totals->fine ?? 0;
+            } else {
+                $totalShares     = $meeting->contributions->sum('shares');
+                $totalSavings    = $meeting->contributions->sum('savings');
+                $totalEmergency  = $meeting->contributions->sum('emergency_fund');
+                $totalFines      = $meeting->contributions->sum('fine');
+            }
             $totalRecaudado  = $totalSavings + $totalEmergency + $totalFines;
             $shareValue      = $meeting->group->share_value ?? 10;
         @endphp
@@ -277,6 +358,7 @@
         </div>
 
         {{-- Detalle por miembro --}}
+        @unless($meeting->group->isPartial())
         <div class="card card-outline card-success mb-3">
             <div class="card-header">
                 <h3 class="card-title"><i class="fas fa-list-alt mr-2"></i>Detalle de Aportes por Miembro</h3>
@@ -346,6 +428,7 @@
                 </div>
             </div>
         </div>
+        @endunless
 
         {{-- Total general --}}
         <div class="card bg-dark text-white mb-3">
@@ -506,6 +589,12 @@ $(document).on('input', '.contribution-input', function() {
     $('#footer-emergency').text(totalEmergency.toFixed(2));
     $('#footer-fines').text(totalFines.toFixed(2));
     $('#footer-total').text((totalSavings + totalEmergency + totalFines).toFixed(2));
+});
+
+$(document).on('input', '#totals-shares', function() {
+    const sharesRaw = $(this).val();
+    const shares  = sharesRaw === '' ? 0 : (parseInt(sharesRaw) || 0);
+    $('#totals-savings-display').val((shares * SHARE_VALUE).toFixed(2));
 });
 </script>
 @endpush

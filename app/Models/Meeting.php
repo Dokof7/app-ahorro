@@ -19,6 +19,7 @@ class Meeting extends Model
 
     public function group() { return $this->belongsTo(Group::class); }
     public function contributions() { return $this->hasMany(MeetingContribution::class); }
+    public function totals() { return $this->hasOne(MeetingTotal::class); }
     public function attendances() { return $this->hasMany(Attendance::class); }
     public function loans() { return $this->hasMany(Loan::class); }
     public function loanPayments() { return $this->hasMany(LoanPayment::class); }
@@ -40,16 +41,25 @@ class Meeting extends Model
 
     public function getTotalSavingsAttribute()
     {
+        if ($this->group->isPartial()) {
+            return $this->totals?->savings ?? 0;
+        }
         return $this->contributions()->sum('savings');
     }
 
     public function getTotalEmergencyAttribute()
     {
+        if ($this->group->isPartial()) {
+            return $this->totals?->emergency_fund ?? 0;
+        }
         return $this->contributions()->sum('emergency_fund');
     }
 
     public function getTotalFinesAttribute()
     {
+        if ($this->group->isPartial()) {
+            return $this->totals?->fine ?? 0;
+        }
         return $this->contributions()->sum('fine');
     }
 

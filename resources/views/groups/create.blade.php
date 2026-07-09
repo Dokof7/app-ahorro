@@ -77,6 +77,17 @@
                                 @error('membership_fee')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                         </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Tipo de Registro <span class="text-danger">*</span></label>
+                                <select name="registration_mode" class="form-control @error('registration_mode') is-invalid @enderror">
+                                    <option value="full" {{ old('registration_mode', 'full') === 'full' ? 'selected' : '' }}>Completo — detalle por miembro</option>
+                                    <option value="partial" {{ old('registration_mode') === 'partial' ? 'selected' : '' }}>Parcial — solo totales de la reunión</option>
+                                </select>
+                                <small class="text-muted">En el registro parcial, el líder del grupo solo carga los totales de la reunión, sin detalle individual por miembro.</small>
+                                @error('registration_mode')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="card-footer">

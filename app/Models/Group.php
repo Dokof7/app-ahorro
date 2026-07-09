@@ -13,7 +13,7 @@ class Group extends Model
     protected $fillable = [
         'user_id', 'name', 'description', 'start_date',
         'status', 'share_value', 'default_shares', 'default_savings', 'default_emergency',
-        'membership_fee',
+        'membership_fee', 'registration_mode',
     ];
 
     protected $casts = ['start_date' => 'date'];
@@ -25,6 +25,8 @@ class Group extends Model
     public function loans() { return $this->hasMany(Loan::class); }
     public function bankExpenses() { return $this->hasMany(BankExpense::class); }
 
+    public function isPartial(): bool { return $this->registration_mode === 'partial'; }
+
     protected static function booted()
     {
         static::saving(function ($group) {
@@ -33,6 +35,9 @@ class Group extends Model
             }
             if ($group->default_shares !== null && (($group->default_shares ?? 0) < 1 || ($group->default_shares ?? 0) > 25)) {
                 throw new \InvalidArgumentException('Las acciones por defecto deben estar entre 1 y 25.');
+            }
+            if ($group->exists && $group->isDirty('registration_mode') && $group->meetings()->exists()) {
+                throw new \RuntimeException('No se puede cambiar el tipo de registro de un grupo que ya tiene reuniones.');
             }
         });
 

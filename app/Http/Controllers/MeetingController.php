@@ -6,6 +6,7 @@ use App\Models\Meeting;
 use App\Models\Group;
 use App\Models\Member;
 use App\Models\MeetingContribution;
+use App\Models\MeetingTotal;
 use App\Models\Attendance;
 use App\Models\MeetingScheduledDate;
 use Illuminate\Http\Request;
@@ -20,7 +21,7 @@ class MeetingController extends Controller
                 ? Group::pluck('id')
                 : auth()->user()->groups()->pluck('groups.id');
 
-            $query = Meeting::with('group')->whereIn('group_id', $groupIds);
+            $query = Meeting::with(['group', 'totals'])->whereIn('group_id', $groupIds);
 
             if ($request->group_id) $query->where('group_id', $request->group_id);
             if ($request->month)    $query->where('month', $request->month);
@@ -31,7 +32,12 @@ class MeetingController extends Controller
                 ->addColumn('status_badge', fn($m) => $m->status === 'open'
                     ? '<span class="badge bg-success">Abierta</span>'
                     : '<span class="badge bg-secondary">Cerrada</span>')
-                ->addColumn('total_contributions', fn($m) => number_format($m->contributions()->sum('total'), 2))
+                ->addColumn('total_contributions', fn($m) => number_format(
+                    $m->group->isPartial()
+                        ? ($m->totals->savings ?? 0) + ($m->totals->emergency_fund ?? 0) + ($m->totals->fine ?? 0)
+                        : $m->contributions()->sum('total'),
+                    2
+                ))
                 ->addColumn('actions', fn($m) => view('meetings._actions', ['meeting' => $m])->render())
                 ->rawColumns(['status_badge', 'actions'])
                 ->make(true);
@@ -83,16 +89,28 @@ class MeetingController extends Controller
             ->update(['used' => true]);
 
         $members = Member::where('group_id', $data['group_id'])->where('status', 'active')->get();
+        $isPartial = $meeting->group->isPartial();
 
         foreach ($members as $member) {
             Attendance::create(['meeting_id' => $meeting->id, 'member_id' => $member->id]);
-            MeetingContribution::create([
+            if (!$isPartial) {
+                MeetingContribution::create([
+                    'meeting_id'     => $meeting->id,
+                    'member_id'      => $member->id,
+                    'shares'         => 0,
+                    'emergency_fund' => 0,
+                    'fine'           => 0,
+                    'confirmed'      => false,
+                ]);
+            }
+        }
+
+        if ($isPartial) {
+            MeetingTotal::create([
                 'meeting_id'     => $meeting->id,
-                'member_id'      => $member->id,
                 'shares'         => 0,
                 'emergency_fund' => 0,
                 'fine'           => 0,
-                'confirmed'      => false,
             ]);
         }
 
@@ -106,6 +124,8 @@ class MeetingController extends Controller
     {
         $this->authorize('view', $meeting);
 
+        $isPartial = $meeting->group->isPartial();
+
         // Sincronizar miembros activos que no tienen registro en esta reunión
         $existingMemberIds = $meeting->attendances()->pluck('member_id');
         $missingMembers = Member::where('group_id', $meeting->group_id)
@@ -115,13 +135,22 @@ class MeetingController extends Controller
 
         foreach ($missingMembers as $member) {
             Attendance::create(['meeting_id' => $meeting->id, 'member_id' => $member->id]);
-            MeetingContribution::firstOrCreate(
-                ['meeting_id' => $meeting->id, 'member_id' => $member->id],
-                ['shares' => 0, 'emergency_fund' => 0, 'fine' => 0, 'confirmed' => false]
+            if (!$isPartial) {
+                MeetingContribution::firstOrCreate(
+                    ['meeting_id' => $meeting->id, 'member_id' => $member->id],
+                    ['shares' => 0, 'emergency_fund' => 0, 'fine' => 0, 'confirmed' => false]
+                );
+            }
+        }
+
+        if ($isPartial) {
+            MeetingTotal::firstOrCreate(
+                ['meeting_id' => $meeting->id],
+                ['shares' => 0, 'emergency_fund' => 0, 'fine' => 0]
             );
         }
 
-        $meeting->load(['group', 'contributions.member', 'attendances.member', 'loans.member', 'bankExpenses', 'summary']);
+        $meeting->load(['group', 'contributions.member', 'attendances.member', 'loans.member', 'bankExpenses', 'summary', 'totals']);
         return view('meetings.show', compact('meeting'));
     }
 

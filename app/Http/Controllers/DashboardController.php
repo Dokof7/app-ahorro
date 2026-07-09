@@ -8,6 +8,7 @@ use App\Models\Member;
 use App\Models\Meeting;
 use App\Models\Loan;
 use App\Models\MeetingContribution;
+use App\Models\MeetingTotal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -35,9 +36,12 @@ class DashboardController extends Controller
             'total_groups'       => $groups->count(),
             'total_members'      => Member::whereIn('group_id', $groupIds)->count(),
             'total_meetings'     => Meeting::whereIn('group_id', $groupIds)->count(),
-            'total_savings'      => MeetingContribution::whereHas('meeting', fn($q) => $q->whereIn('group_id', $groupIds))->sum('savings'),
-            'total_emergency'    => MeetingContribution::whereHas('meeting', fn($q) => $q->whereIn('group_id', $groupIds))->sum('emergency_fund'),
-            'total_fines'        => MeetingContribution::whereHas('meeting', fn($q) => $q->whereIn('group_id', $groupIds))->sum('fine'),
+            'total_savings'      => MeetingContribution::whereHas('meeting', fn($q) => $q->whereIn('group_id', $groupIds))->sum('savings')
+                                        + MeetingTotal::whereHas('meeting', fn($q) => $q->whereIn('group_id', $groupIds))->sum('savings'),
+            'total_emergency'    => MeetingContribution::whereHas('meeting', fn($q) => $q->whereIn('group_id', $groupIds))->sum('emergency_fund')
+                                        + MeetingTotal::whereHas('meeting', fn($q) => $q->whereIn('group_id', $groupIds))->sum('emergency_fund'),
+            'total_fines'        => MeetingContribution::whereHas('meeting', fn($q) => $q->whereIn('group_id', $groupIds))->sum('fine')
+                                        + MeetingTotal::whereHas('meeting', fn($q) => $q->whereIn('group_id', $groupIds))->sum('fine'),
             'loans_pending'      => Loan::whereIn('group_id', $groupIds)->where('status', 'pending')->sum('balance'),
             'loans_paid'         => Loan::whereIn('group_id', $groupIds)->where('status', 'paid')->sum('total_to_return'),
             'loans_overdue'         => Loan::whereIn('group_id', $groupIds)->where('status', 'overdue')->count(),
@@ -69,9 +73,10 @@ class DashboardController extends Controller
         $emergency = [];
 
         foreach ($meetings as $meeting) {
+            $totalsRow = MeetingTotal::where('meeting_id', $meeting->id)->first();
             $labels[]    = 'Reunión ' . $meeting->meeting_number . ' (' . \Carbon\Carbon::parse($meeting->meeting_date)->format('d/m/Y') . ')';
-            $savings[]   = (float) MeetingContribution::where('meeting_id', $meeting->id)->sum('savings');
-            $emergency[] = (float) MeetingContribution::where('meeting_id', $meeting->id)->sum('emergency_fund');
+            $savings[]   = (float) MeetingContribution::where('meeting_id', $meeting->id)->sum('savings') + (float) ($totalsRow->savings ?? 0);
+            $emergency[] = (float) MeetingContribution::where('meeting_id', $meeting->id)->sum('emergency_fund') + (float) ($totalsRow->emergency_fund ?? 0);
         }
 
         return compact('labels', 'savings', 'emergency');
