@@ -52,11 +52,13 @@ class ActivityController extends Controller
 
     public function edit(Activity $activity)
     {
+        $this->authorizeActivity($activity);
         return view('activities.edit', compact('activity'));
     }
 
     public function update(Request $request, Activity $activity)
     {
+        $this->authorizeActivity($activity);
         $data = $request->validate([
             'name'          => 'required|string|max:255',
             'activity_date' => 'required|date',
@@ -71,7 +73,17 @@ class ActivityController extends Controller
 
     public function destroy(Activity $activity)
     {
+        $this->authorizeActivity($activity);
         $activity->delete();
         return redirect()->route('activities.index')->with('success', 'Actividad eliminada.');
+    }
+
+    private function authorizeActivity(Activity $activity): void
+    {
+        $user = auth()->user();
+        abort_unless(
+            $user->isAdmin() || $user->groups()->where('groups.id', $activity->group_id)->exists(),
+            403
+        );
     }
 }

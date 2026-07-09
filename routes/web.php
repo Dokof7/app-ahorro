@@ -116,6 +116,7 @@ Route::middleware('auth')->group(function () {
         // Activities write
         Route::get('activities/new', [ActivityController::class, 'create'])->name('activities.create');
         Route::resource('activities', ActivityController::class)->only(['store', 'edit', 'update']);
+        Route::delete('activities/{activity}', [ActivityController::class, 'destroy'])->name('activities.destroy');
 
         // Meeting scheduled dates write
         Route::post('meeting-scheduled-dates',           [MeetingScheduledDateController::class, 'store'])->name('meeting-scheduled-dates.store');
@@ -130,7 +131,6 @@ Route::middleware('auth')->group(function () {
         Route::delete('loan-payments/{loanPayment}',[LoanPaymentController::class,'destroy'])->name('loan-payments.destroy');
         Route::delete('fines/{fine}',               [FineController::class,       'destroy'])->name('fines.destroy');
         Route::delete('bank-expenses/{bankExpense}',[BankExpenseController::class,'destroy'])->name('bank-expenses.destroy');
-        Route::delete('activities/{activity}',      [ActivityController::class,   'destroy'])->name('activities.destroy');
     });
 
     // Users – admin only

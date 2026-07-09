@@ -103,6 +103,18 @@
 <script>
 $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
 
+// Disable submit buttons once a form is really submitting, so slow
+// responses on shared hosting cannot produce duplicate records via
+// double click. Deferred so a preventDefault by other handlers wins.
+$(document).on('submit', 'form', function(e) {
+    const $form = $(this);
+    setTimeout(function() {
+        if (!e.isDefaultPrevented()) {
+            $form.find('button[type="submit"]').prop('disabled', true);
+        }
+    }, 0);
+});
+
 $(document).on('click', '.btn-delete-confirm', function(e) {
     e.preventDefault();
     const form = $(this).closest('form');
