@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter devices *)",
+      "Bash(flutter clean *)",
+      "Bash(rm -rf \"C:/Users/admin/AppData/Local/Android/sdk/ndk/28.2.13676358\")",
+      "Bash(ls \"C:\\\\Users\\\\admin\\\\Downloads\\\\Nueva carpeta \\(7\\)\")",
+      "Read(//c/Users/admin/Downloads/Nueva carpeta \\(7\\)/**)",
+      "Bash(mkdir -p \"C:\\\\Users\\\\admin\\\\proyectos\\\\app-ahorro\\\\grupoahorro_app\\\\assets\\\\icon\" && cp \"C:\\\\Users\\\\admin\\\\Downloads\\\\Nueva carpeta \\(7\\)\\\\logo grupo de ahorro.png\" \"C:\\\\Users\\\\admin\\\\proyectos\\\\app-ahorro\\\\grupoahorro_app\\\\assets\\\\icon\\\\icon.png\")"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\admin\\AppData\\Local\\Android\\sdk\\ndk\\28.2.13676358",
+      "C:\\Users\\admin\\Downloads\\Nueva carpeta (7)"
+    ]
+  }
+}
