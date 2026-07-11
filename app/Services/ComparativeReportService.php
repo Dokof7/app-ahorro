@@ -154,40 +154,53 @@ class ComparativeReportService
      * Member rankings within a single group: top savers and top attendance.
      * Mirrors ReportController::memberRankingReport() ranking logic, scoped
      * to one group and split into two independent top-10 lists.
+     *
+     * $withSavers / $withAttendance let callers skip a list entirely: the
+     * related rows are not eager loaded and the list is returned empty.
      */
-    public function memberRankings(Group $group, array $filters = []): array
+    public function memberRankings(Group $group, array $filters = [], bool $withSavers = true, bool $withAttendance = true): array
     {
-        $memberQuery = Member::where('group_id', $group->id)
-            ->with(['contributions', 'attendances'])
-            ->where('status', 'active');
-        $members = $memberQuery->get();
-
-        $totalMeetings = Meeting::where('group_id', $group->id)
-            ->when(!empty($filters['year']), fn($q) => $q->whereYear('meeting_date', $filters['year']))
-            ->count();
-
         // Partial-registration groups only record aggregate MeetingTotal rows,
         // so per-member savings are always zero — a savers ranking is meaningless.
-        $topSavers = $group->isPartial()
+        $computeSavers = $withSavers && !$group->isPartial();
+
+        $relations = [];
+        if ($computeSavers)   $relations[] = 'contributions';
+        if ($withAttendance)  $relations[] = 'attendances';
+
+        $members = Member::where('group_id', $group->id)
+            ->with($relations)
+            ->where('status', 'active')
+            ->get();
+
+        $totalMeetings = $withAttendance
+            ? Meeting::where('group_id', $group->id)
+                ->when(!empty($filters['year']), fn($q) => $q->whereYear('meeting_date', $filters['year']))
+                ->count()
+            : 0;
+
+        $topSavers = !$computeSavers
             ? collect()
             : $members->map(function ($member) {
                 return [
                     'member_id'     => $member->id,
                     'name'          => $member->full_name,
-                    'total_saved'   => (float) $member->total_savings,
+                    'total_saved'   => (float) $member->contributions->sum('savings'),
                     'contributions' => $member->contributions->where('shares', '>', 0)->count(),
                 ];
             })->sortByDesc('total_saved')->take(10)->values();
 
-        $topAttendance = $members->map(function ($member) use ($totalMeetings) {
-            $attended = $member->attendances->whereIn('status', ['present', 'late'])->count();
-            return [
-                'member_id'       => $member->id,
-                'name'            => $member->full_name,
-                'attended'        => $attended,
-                'attendance_rate' => $totalMeetings > 0 ? round(($attended / $totalMeetings) * 100, 1) : 0.0,
-            ];
-        })->sortByDesc('attendance_rate')->take(10)->values();
+        $topAttendance = !$withAttendance
+            ? collect()
+            : $members->map(function ($member) use ($totalMeetings) {
+                $attended = $member->attendances->whereIn('status', ['present', 'late'])->count();
+                return [
+                    'member_id'       => $member->id,
+                    'name'            => $member->full_name,
+                    'attended'        => $attended,
+                    'attendance_rate' => $totalMeetings > 0 ? round(($attended / $totalMeetings) * 100, 1) : 0.0,
+                ];
+            })->sortByDesc('attendance_rate')->take(10)->values();
 
         return [
             'top_savers'     => $topSavers,

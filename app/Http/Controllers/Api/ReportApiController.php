@@ -52,9 +52,14 @@ class ReportApiController extends Controller
         return response()->json(['data' => $data]);
     }
 
+    private const SUMMARY_SECTIONS = ['monthly', 'sessions', 'top_savers', 'top_attendance'];
+
     /**
      * GET /api/reports/groups/{group}/summary
-     * Optional query param: year.
+     * Optional query params: year, sections (comma-separated subset of
+     * monthly,sessions,top_savers,top_attendance — absent/empty means all;
+     * unknown tokens are ignored). Only requested sections are computed;
+     * "group" is always included.
      */
     public function groupSummary(Request $request, Group $group)
     {
@@ -69,53 +74,95 @@ class ReportApiController extends Controller
         }
 
         $filters = $request->validate([
-            'year' => 'nullable|integer|min:2000|max:2100',
+            'year'     => 'nullable|integer|min:2000|max:2100',
+            'sections' => 'nullable|string',
         ]);
 
-        $periodsResult = $this->comparativeReportService->comparativePeriods(
-            array_merge($filters, ['group_id' => $group->id]),
-            $groupIds,
-            withSessions: true
-        );
+        $sections = $this->resolveSections($filters['sections'] ?? null);
+        unset($filters['sections']);
 
-        $monthly = collect($periodsResult['periods'])->map(fn($period) => [
-            'period'          => $period['period'],
-            'label'           => $period['label'],
-            'savings'         => (float) $period['savings'],
-            'fines'           => (float) $period['fines'],
-            'loans_out'       => (float) $period['loans_out'],
-            'loan_payments'   => (float) $period['loan_payments'],
-            'attendance_rate' => (float) $period['attendance_rate'],
-            'savings_delta'   => $period['savings_delta'] !== null ? (float) $period['savings_delta'] : null,
-        ])->values();
-
-        $rankings = $this->comparativeReportService->memberRankings($group, $filters);
-
-        $topSavers = collect($rankings['top_savers'])->map(fn($m) => [
-            'member_id'     => $m['member_id'],
-            'name'          => $m['name'],
-            'total_saved'   => (float) $m['total_saved'],
-            'contributions' => $m['contributions'],
-        ])->values();
-
-        $topAttendance = collect($rankings['top_attendance'])->map(fn($m) => [
-            'member_id'       => $m['member_id'],
-            'name'            => $m['name'],
-            'attended'        => $m['attended'],
-            'attendance_rate' => (float) $m['attendance_rate'],
-        ])->values();
-
-        return response()->json(['data' => [
+        $data = [
             'group' => [
                 'id'                => $group->id,
                 'name'              => $group->name,
                 'registration_mode' => $group->registration_mode ?? 'full',
             ],
-            'monthly'        => $monthly,
-            'sessions'       => $periodsResult['sessions'],
-            'top_savers'     => $topSavers,
-            'top_attendance' => $topAttendance,
-        ]]);
+        ];
+
+        $wantsMonthly  = in_array('monthly', $sections);
+        $wantsSessions = in_array('sessions', $sections);
+
+        if ($wantsMonthly || $wantsSessions) {
+            $periodsResult = $this->comparativeReportService->comparativePeriods(
+                array_merge($filters, ['group_id' => $group->id]),
+                $groupIds,
+                withSessions: $wantsSessions
+            );
+
+            if ($wantsMonthly) {
+                $data['monthly'] = collect($periodsResult['periods'])->map(fn($period) => [
+                    'period'          => $period['period'],
+                    'label'           => $period['label'],
+                    'savings'         => (float) $period['savings'],
+                    'fines'           => (float) $period['fines'],
+                    'loans_out'       => (float) $period['loans_out'],
+                    'loan_payments'   => (float) $period['loan_payments'],
+                    'attendance_rate' => (float) $period['attendance_rate'],
+                    'savings_delta'   => $period['savings_delta'] !== null ? (float) $period['savings_delta'] : null,
+                ])->values();
+            }
+
+            if ($wantsSessions) {
+                $data['sessions'] = $periodsResult['sessions'];
+            }
+        }
+
+        $wantsSavers     = in_array('top_savers', $sections);
+        $wantsAttendance = in_array('top_attendance', $sections);
+
+        if ($wantsSavers || $wantsAttendance) {
+            $rankings = $this->comparativeReportService->memberRankings(
+                $group,
+                $filters,
+                withSavers: $wantsSavers,
+                withAttendance: $wantsAttendance
+            );
+
+            if ($wantsSavers) {
+                $data['top_savers'] = collect($rankings['top_savers'])->map(fn($m) => [
+                    'member_id'     => $m['member_id'],
+                    'name'          => $m['name'],
+                    'total_saved'   => (float) $m['total_saved'],
+                    'contributions' => $m['contributions'],
+                ])->values();
+            }
+
+            if ($wantsAttendance) {
+                $data['top_attendance'] = collect($rankings['top_attendance'])->map(fn($m) => [
+                    'member_id'       => $m['member_id'],
+                    'name'            => $m['name'],
+                    'attended'        => $m['attended'],
+                    'attendance_rate' => (float) $m['attendance_rate'],
+                ])->values();
+            }
+        }
+
+        return response()->json(['data' => $data]);
+    }
+
+    /**
+     * Whitelist-filter the sections query param. Absent or empty means all
+     * sections; unknown tokens are dropped (all-unknown yields none).
+     */
+    private function resolveSections(?string $raw): array
+    {
+        if ($raw === null || trim($raw) === '') {
+            return self::SUMMARY_SECTIONS;
+        }
+
+        $tokens = array_map('trim', explode(',', $raw));
+
+        return array_values(array_intersect(self::SUMMARY_SECTIONS, $tokens));
     }
 
     private function resolveGroupIds($user)
