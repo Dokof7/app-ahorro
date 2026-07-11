@@ -135,17 +135,74 @@ class GroupTopAttendance {
   }
 }
 
+class GroupSessionRow {
+  final int meetingId;
+  final int number;
+  final String? date;
+  final String status;
+  final int attended;
+  final int totalMembers;
+  final double attendanceRate;
+  final double savings;
+  final double emergency;
+  final double fines;
+
+  bool get isClosed => status == 'closed';
+
+  const GroupSessionRow({
+    required this.meetingId,
+    required this.number,
+    required this.date,
+    required this.status,
+    required this.attended,
+    required this.totalMembers,
+    required this.attendanceRate,
+    required this.savings,
+    required this.emergency,
+    required this.fines,
+  });
+
+  factory GroupSessionRow.fromJson(Map<String, dynamic> j) => GroupSessionRow(
+        meetingId: _toInt(j['meeting_id']),
+        number: _toInt(j['number']),
+        date: j['date'] as String?,
+        status: j['status'] as String? ?? 'closed',
+        attended: _toInt(j['attended']),
+        totalMembers: _toInt(j['total_members']),
+        attendanceRate: _toDouble(j['attendance_rate']),
+        savings: _toDouble(j['savings']),
+        emergency: _toDouble(j['emergency']),
+        fines: _toDouble(j['fines']),
+      );
+
+  static int _toInt(dynamic v) {
+    if (v == null) return 0;
+    if (v is int) return v;
+    if (v is double) return v.toInt();
+    return int.tryParse(v.toString()) ?? 0;
+  }
+
+  static double _toDouble(dynamic v) {
+    if (v == null) return 0.0;
+    if (v is double) return v;
+    if (v is int) return v.toDouble();
+    return double.tryParse(v.toString()) ?? 0.0;
+  }
+}
+
 class GroupReportSummary {
   final GroupReportGroup group;
   final List<GroupMonthlyPoint> monthly;
   final List<GroupTopSaver> topSavers;
   final List<GroupTopAttendance> topAttendance;
+  final List<GroupSessionRow> sessions;
 
   const GroupReportSummary({
     required this.group,
     required this.monthly,
     required this.topSavers,
     required this.topAttendance,
+    required this.sessions,
   });
 
   factory GroupReportSummary.fromJson(Map<String, dynamic> j) => GroupReportSummary(
@@ -160,6 +217,10 @@ class GroupReportSummary {
             .toList(),
         topAttendance: (j['top_attendance'] as List? ?? const [])
             .map((e) => GroupTopAttendance.fromJson((e as Map).cast<String, dynamic>()))
+            .toList(),
+        // Missing on stale backends — tolerate absence with an empty list.
+        sessions: (j['sessions'] as List? ?? const [])
+            .map((e) => GroupSessionRow.fromJson((e as Map).cast<String, dynamic>()))
             .toList(),
       );
 }

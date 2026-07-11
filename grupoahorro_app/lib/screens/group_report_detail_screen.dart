@@ -25,6 +25,9 @@ class _GroupReportDetailScreenState extends State<GroupReportDetailScreen>
   bool _loading = true;
   String? _error;
   int? _selectedYear;
+  bool _showAllSessions = false;
+
+  static const int _visibleSessionCount = 6;
 
   late final List<int> _years = List.generate(5, (i) => DateTime.now().year - i);
 
@@ -54,6 +57,7 @@ class _GroupReportDetailScreenState extends State<GroupReportDetailScreen>
     setState(() {
       _loading = true;
       _error = null;
+      _showAllSessions = false;
     });
     try {
       final summary = await _service.fetchGroupSummary(widget.groupId, year: _selectedYear);
@@ -124,8 +128,9 @@ class _GroupReportDetailScreenState extends State<GroupReportDetailScreen>
     final hasMonthly = s.monthly.isNotEmpty;
     final hasTopSavers = !isPartial && s.topSavers.isNotEmpty;
     final hasTopAttendance = s.topAttendance.isNotEmpty;
+    final hasSessions = s.sessions.isNotEmpty;
 
-    if (!hasMonthly && !hasTopSavers && !hasTopAttendance) {
+    if (!hasMonthly && !hasTopSavers && !hasTopAttendance && !hasSessions) {
       return RefreshIndicator(
         onRefresh: _load,
         color: const Color(0xFF1B3A6B),
@@ -182,10 +187,156 @@ class _GroupReportDetailScreenState extends State<GroupReportDetailScreen>
             _buildSectionHeader('Mejor asistencia', Icons.verified_rounded),
             const SizedBox(height: 12),
             _buildTopAttendanceCard(s.topAttendance),
+            const SizedBox(height: 24),
           ],
+          _buildSectionHeader('Detalle por sesión', Icons.receipt_long_rounded),
+          const SizedBox(height: 12),
+          _buildSessionsSection(s.sessions),
         ],
       ),
     );
+  }
+
+  Widget _buildSessionsSection(List<GroupSessionRow> sessions) {
+    if (sessions.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Center(
+          child: Text(
+            'Sin sesiones registradas',
+            style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+          ),
+        ),
+      );
+    }
+
+    // Backend sends sessions ordered by number ascending; render newest first.
+    final newestFirst = sessions.reversed.toList();
+    final visible = _showAllSessions
+        ? newestFirst
+        : newestFirst.take(_visibleSessionCount).toList();
+    final hasMore = newestFirst.length > _visibleSessionCount;
+
+    return Column(
+      children: [
+        for (final session in visible) ...[
+          _buildSessionCard(session),
+          const SizedBox(height: 12),
+        ],
+        if (hasMore)
+          TextButton.icon(
+            onPressed: () => setState(() => _showAllSessions = !_showAllSessions),
+            style: TextButton.styleFrom(foregroundColor: const Color(0xFF1B3A6B)),
+            icon: Icon(
+              _showAllSessions
+                  ? Icons.keyboard_arrow_up_rounded
+                  : Icons.keyboard_arrow_down_rounded,
+            ),
+            label: Text(
+              _showAllSessions
+                  ? 'Ver menos'
+                  : 'Ver todas las sesiones (${newestFirst.length})',
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSessionCard(GroupSessionRow session) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 12, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Sesión #${session.number} · ${_fmtSessionDate(session.date)}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1A1A2E),
+                  ),
+                ),
+              ),
+              if (!session.isClosed)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE65100).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    'Abierta',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFE65100),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Asistencia: ${session.attended}/${session.totalMembers} '
+            '(${session.attendanceRate.toStringAsFixed(0)}%)',
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 10),
+          Divider(height: 1, color: Colors.grey.shade100),
+          const SizedBox(height: 10),
+          _sessionAmountRow(Icons.savings_rounded, 'Ahorro', session.savings, const Color(0xFF0D7C5F)),
+          const SizedBox(height: 8),
+          _sessionAmountRow(Icons.shield_rounded, 'Emergencia', session.emergency, const Color(0xFF1B3A6B)),
+          const SizedBox(height: 8),
+          _sessionAmountRow(Icons.gavel_rounded, 'Multas', session.fines, const Color(0xFFE65100)),
+        ],
+      ),
+    );
+  }
+
+  Widget _sessionAmountRow(IconData icon, String label, double value, Color color) {
+    return Row(
+      children: [
+        Icon(icon, size: 15, color: color),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 13, color: Color(0xFF444B60)),
+          ),
+        ),
+        Text(
+          'Bs. ${_fmt(value)}',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color),
+        ),
+      ],
+    );
+  }
+
+  String _fmtSessionDate(String? raw) {
+    if (raw == null || raw.isEmpty) return '—';
+    final d = DateTime.tryParse(raw);
+    if (d == null) return raw;
+    const months = [
+      'ene', 'feb', 'mar', 'abr', 'may', 'jun',
+      'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+    ];
+    return '${d.day} ${months[d.month - 1]} ${d.year}';
   }
 
   Widget _buildYearFilter() {
