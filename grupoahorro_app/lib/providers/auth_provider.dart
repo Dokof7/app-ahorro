@@ -18,7 +18,8 @@ class AuthProvider extends ChangeNotifier {
   String? get userEmail => _userEmail;
   String? get userRole => _userRole;
   bool get isAdmin => _userRole == 'admin';
-  bool get canViewReports => _userRole == 'admin' || _userRole == 'admin_grupo';
+  bool get isGroupManager => _userRole == 'admin' || _userRole == 'admin_grupo';
+  bool get canViewReports => isGroupManager;
   String? get error => _error;
   bool get loading => _loading;
 

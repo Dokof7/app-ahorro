@@ -57,7 +57,7 @@ class _AuthGateState extends State<_AuthGate> {
       AuthStatus.unknown => const Scaffold(
           body: Center(child: CircularProgressIndicator()),
         ),
-      AuthStatus.authenticated => auth.isAdmin
+      AuthStatus.authenticated => auth.isGroupManager
           ? const AdminGroupsScreen()
           : const HomeScreen(),
       AuthStatus.unauthenticated => const LoginScreen(),

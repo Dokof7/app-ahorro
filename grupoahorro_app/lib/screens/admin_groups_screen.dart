@@ -119,7 +119,10 @@ class _AdminGroupsScreenState extends State<AdminGroupsScreen> {
                                 children: [
                                   Icon(Icons.admin_panel_settings_rounded, size: 13, color: Colors.amber.shade300),
                                   const SizedBox(width: 4),
-                                  Text('Administrador', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.amber.shade300)),
+                                  Text(
+                                    auth.isAdmin ? 'Administrador' : 'Admin. de grupo',
+                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.amber.shade300),
+                                  ),
                                 ],
                               ),
                             ),
@@ -127,7 +130,7 @@ class _AdminGroupsScreenState extends State<AdminGroupsScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Hola, ${auth.userName ?? 'Admin'} 👋',
+                          'Hola, ${auth.userName ?? 'usuario'} 👋',
                           style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700),
                         ),
                         const SizedBox(height: 4),

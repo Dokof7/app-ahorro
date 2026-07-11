@@ -11,6 +11,22 @@ class ComparativeReportsScreen extends StatefulWidget {
   State<ComparativeReportsScreen> createState() => _ComparativeReportsScreenState();
 }
 
+/// Config-driven ranking definition. Adding a new ranking is a one-entry
+/// addition to [_ComparativeReportsScreenState._rankingDefs].
+class _RankingDef {
+  final String title;
+  final IconData icon;
+  final double Function(GroupComparison) value;
+  final String Function(GroupComparison) format;
+
+  const _RankingDef({
+    required this.title,
+    required this.icon,
+    required this.value,
+    required this.format,
+  });
+}
+
 class _ComparativeReportsScreenState extends State<ComparativeReportsScreen>
     with SingleTickerProviderStateMixin {
   final _service = ReportsService();
@@ -62,23 +78,56 @@ class _ComparativeReportsScreenState extends State<ComparativeReportsScreen>
     }
   }
 
+  /// Ranking catalog: each entry renders one ranked card in the Rankings tab.
+  late final List<_RankingDef> _rankingDefs = [
+    _RankingDef(
+      title: 'Grupos con más aportes',
+      icon: Icons.savings_rounded,
+      value: (g) => g.totalSavings,
+      format: (g) => 'Bs. ${_fmt(g.totalSavings)}',
+    ),
+    _RankingDef(
+      title: 'Mejor asistencia',
+      icon: Icons.event_available_rounded,
+      value: (g) => g.attendanceRate,
+      format: (g) => '${g.attendanceRate.toStringAsFixed(1)}%',
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF2F4F8),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0D2347),
-        foregroundColor: Colors.white,
-        title: const Text(
-          'Comparativa de grupos',
-          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF2F4F8),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF0D2347),
+          foregroundColor: Colors.white,
+          title: const Text(
+            'Comparativa de grupos',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+          ),
+          bottom: const TabBar(
+            indicatorColor: Colors.white,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
+            tabs: [
+              Tab(text: 'Comparativa'),
+              Tab(text: 'Rankings'),
+            ],
+          ),
         ),
+        body: _loading
+            ? const Center(child: CircularProgressIndicator(color: Color(0xFF1B3A6B)))
+            : _error != null
+                ? _buildError()
+                : TabBarView(
+                    children: [
+                      _buildComparisonTab(),
+                      _buildRankingsTab(),
+                    ],
+                  ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF1B3A6B)))
-          : _error != null
-              ? _buildError()
-              : _buildContent(),
     );
   }
 
@@ -112,32 +161,34 @@ class _ComparativeReportsScreenState extends State<ComparativeReportsScreen>
     );
   }
 
-  Widget _buildContent() {
-    if (_groups.isEmpty) {
-      return RefreshIndicator(
-        onRefresh: _load,
-        color: const Color(0xFF1B3A6B),
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _buildYearFilter(),
-            const SizedBox(height: 80),
-            Center(
-              child: Column(
-                children: [
-                  Icon(Icons.groups_outlined, size: 48, color: Colors.grey.shade300),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Sin datos de grupos para este período',
-                    style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-                  ),
-                ],
-              ),
+  Widget _buildEmpty() {
+    return RefreshIndicator(
+      onRefresh: _load,
+      color: const Color(0xFF1B3A6B),
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _buildYearFilter(),
+          const SizedBox(height: 80),
+          Center(
+            child: Column(
+              children: [
+                Icon(Icons.groups_outlined, size: 48, color: Colors.grey.shade300),
+                const SizedBox(height: 12),
+                Text(
+                  'Sin datos de grupos para este período',
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                ),
+              ],
             ),
-          ],
-        ),
-      );
-    }
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildComparisonTab() {
+    if (_groups.isEmpty) return _buildEmpty();
 
     return RefreshIndicator(
       onRefresh: _load,
@@ -159,6 +210,148 @@ class _ComparativeReportsScreenState extends State<ComparativeReportsScreen>
           const SizedBox(height: 12),
           _buildGroupsList(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildRankingsTab() {
+    if (_groups.isEmpty) return _buildEmpty();
+
+    return RefreshIndicator(
+      onRefresh: _load,
+      color: const Color(0xFF1B3A6B),
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _buildYearFilter(),
+          const SizedBox(height: 16),
+          for (final def in _rankingDefs) ...[
+            _buildSectionHeader(def.title, def.icon),
+            const SizedBox(height: 12),
+            _buildRankingCard(def),
+            const SizedBox(height: 24),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRankingCard(_RankingDef def) {
+    final sorted = [..._groups]..sort((a, b) => def.value(b).compareTo(def.value(a)));
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 12, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        children: List.generate(sorted.length, (i) {
+          final g = sorted[i];
+          return Column(
+            children: [
+              _buildRankingRow(g, i + 1, def),
+              if (i < sorted.length - 1)
+                Divider(height: 1, indent: 62, endIndent: 16, color: Colors.grey.shade100),
+            ],
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildRankingRow(GroupComparison g, int rank, _RankingDef def) {
+    return InkWell(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => GroupReportDetailScreen(
+            groupId: g.groupId,
+            groupName: g.groupName,
+          ),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            _medalBadge(rank),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          g.groupName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E)),
+                        ),
+                      ),
+                      if (g.isPartial) ...[
+                        const SizedBox(width: 6),
+                        _partialChip(),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${g.activeMembers} miembros',
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              def.format(g),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF1B3A6B)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _medalBadge(int rank) {
+    final color = switch (rank) {
+      1 => const Color(0xFFE6A100),
+      2 => const Color(0xFF9AA0A6),
+      3 => const Color(0xFFB5651D),
+      _ => const Color(0xFF1B3A6B),
+    };
+    return Container(
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.12), shape: BoxShape.circle),
+      child: Center(
+        child: Text(
+          '$rank',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: color),
+        ),
+      ),
+    );
+  }
+
+  Widget _partialChip() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: const Color(0xFF7B4F9E).withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: const Text(
+        'Registro grupal',
+        style: TextStyle(
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF7B4F9E),
+        ),
       ),
     );
   }
@@ -474,21 +667,7 @@ class _ComparativeReportsScreenState extends State<ComparativeReportsScreen>
                       ),
                       if (g.isPartial) ...[
                         const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF7B4F9E).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Text(
-                            'Registro grupal',
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF7B4F9E),
-                            ),
-                          ),
-                        ),
+                        _partialChip(),
                       ],
                     ],
                   ),
