@@ -74,7 +74,8 @@ class ReportApiController extends Controller
 
         $periodsResult = $this->comparativeReportService->comparativePeriods(
             array_merge($filters, ['group_id' => $group->id]),
-            $groupIds
+            $groupIds,
+            withSessions: true
         );
 
         $monthly = collect($periodsResult['periods'])->map(fn($period) => [
@@ -111,6 +112,7 @@ class ReportApiController extends Controller
                 'registration_mode' => $group->registration_mode ?? 'full',
             ],
             'monthly'        => $monthly,
+            'sessions'       => $periodsResult['sessions'],
             'top_savers'     => $topSavers,
             'top_attendance' => $topAttendance,
         ]]);

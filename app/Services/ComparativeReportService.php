@@ -64,8 +64,12 @@ class ComparativeReportService
      * Compare monthly periods within a single group.
      * Mirrors ReportController::comparativePeriodsReport() — same array shape.
      * Caller is responsible for the group-ownership abort(403) check.
+     *
+     * When $withSessions is true the result also includes a 'sessions' array
+     * with one per-meeting breakdown row (API-only; web callers keep the
+     * default so their view data shape is unchanged).
      */
-    public function comparativePeriods(array $filters, $groupIds): array
+    public function comparativePeriods(array $filters, $groupIds, bool $withSessions = false): array
     {
         if (empty($filters['group_id']) || !$groupIds->contains($filters['group_id'])) {
             abort(403);
@@ -109,7 +113,41 @@ class ComparativeReportService
             $previousSavings = $row['savings'];
         }
 
-        return ['periods' => array_values($periods), 'filters' => $filters];
+        $result = ['periods' => array_values($periods), 'filters' => $filters];
+
+        if ($withSessions) {
+            $result['sessions'] = $this->meetingSessions($meetings);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Per-meeting breakdown rows built from an already-loaded meetings
+     * collection (contributions, totals, fines, attendances must be eager
+     * loaded by the caller). Money sums add both sources — per-member
+     * contributions plus the partial-registration MeetingTotal row — matching
+     * the monthly computation so the same meeting shows the same amounts.
+     */
+    private function meetingSessions($meetings): array
+    {
+        return $meetings->sortBy('meeting_number')->map(function ($meeting) {
+            $attended     = $meeting->attendances->whereIn('status', ['present', 'late'])->count();
+            $totalMembers = $meeting->attendances->count();
+
+            return [
+                'meeting_id'      => $meeting->id,
+                'number'          => $meeting->meeting_number,
+                'date'            => $meeting->meeting_date->format('Y-m-d'),
+                'status'          => $meeting->status,
+                'attended'        => $attended,
+                'total_members'   => $totalMembers,
+                'attendance_rate' => $totalMembers > 0 ? round(($attended / $totalMembers) * 100, 1) : 0,
+                'savings'         => (float) ($meeting->contributions->sum('savings') + ($meeting->totals?->savings ?? 0)),
+                'emergency'       => (float) ($meeting->contributions->sum('emergency_fund') + ($meeting->totals?->emergency_fund ?? 0)),
+                'fines'           => (float) ($meeting->fines->where('status', 'paid')->sum('amount') + ($meeting->totals?->fine ?? 0)),
+            ];
+        })->values()->all();
     }
 
     /**
