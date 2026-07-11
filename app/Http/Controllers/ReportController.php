@@ -11,12 +11,17 @@ use App\Models\MeetingContribution;
 use App\Models\Attendance;
 use App\Models\BankExpense;
 use App\Exports\GroupReportExport;
+use App\Services\ComparativeReportService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ReportController extends Controller
 {
+    public function __construct(private ComparativeReportService $comparativeReportService)
+    {
+    }
+
     private const REPORT_TYPES = [
         'group', 'member', 'meeting', 'loans_pending', 'loans_paid', 'monthly',
         'financial_summary', 'savings_evolution', 'cash_statement',
@@ -596,95 +601,11 @@ class ReportController extends Controller
 
     private function comparativeGroupsReport(array $filters, $groupIds): array
     {
-        $groupQuery = Group::whereIn('id', $groupIds)
-            ->with(['members', 'meetings.contributions', 'meetings.totals', 'meetings.fines', 'meetings.loans', 'meetings.loanPayments', 'meetings.attendances']);
-        if (!empty($filters['group_id'])) $groupQuery->where('id', $filters['group_id']);
-        $groups = $groupQuery->get();
-
-        $rows = [];
-        foreach ($groups as $group) {
-            $meetings = $group->meetings->filter(function ($meeting) use ($filters) {
-                if (!empty($filters['date_from']) && $meeting->meeting_date->lt($filters['date_from'])) return false;
-                if (!empty($filters['date_to'])   && $meeting->meeting_date->gt($filters['date_to']))   return false;
-                if (!empty($filters['year'])      && $meeting->meeting_date->year != $filters['year'])  return false;
-                return true;
-            });
-
-            // Partial-registration meetings store amounts in a totals row instead
-            // of per-member contribution rows, so both sources are added.
-            $meetingTotals   = $meetings->pluck('totals')->filter();
-            $totalSavings    = $meetings->flatMap->contributions->sum('savings') + $meetingTotals->sum('savings');
-            $totalEmergency  = $meetings->flatMap->contributions->sum('emergency_fund') + $meetingTotals->sum('emergency_fund');
-            $totalFines      = $meetings->flatMap->fines->where('status', 'paid')->sum('amount') + $meetingTotals->sum('fine');
-            $totalLoansOut   = $meetings->flatMap->loans->sum('amount');
-            $totalLoansRecov = $meetings->flatMap->loans->sum('amount_paid');
-            $totalLoansBal   = $meetings->flatMap->loans->sum('balance');
-            $totalInterest   = $meetings->flatMap->loanPayments->sum('interest_paid');
-
-            $totalAttendances = $meetings->flatMap->attendances;
-            $attendedCount    = $totalAttendances->whereIn('status', ['present', 'late'])->count();
-            $attendanceRate   = $totalAttendances->count() > 0 ? round(($attendedCount / $totalAttendances->count()) * 100, 1) : 0;
-
-            $rows[] = [
-                'group'             => $group,
-                'active_members'    => $group->members->where('status', 'active')->count(),
-                'total_savings'     => $totalSavings,
-                'total_emergency'   => $totalEmergency,
-                'total_fines'       => $totalFines,
-                'total_loans_out'   => $totalLoansOut,
-                'total_loans_recov' => $totalLoansRecov,
-                'total_loans_bal'   => $totalLoansBal,
-                'total_interest'    => $totalInterest,
-                'attendance_rate'   => $attendanceRate,
-            ];
-        }
-
-        return ['rows' => $rows, 'filters' => $filters];
+        return $this->comparativeReportService->comparativeGroups($filters, $groupIds);
     }
 
     private function comparativePeriodsReport(array $filters, $groupIds): array
     {
-        if (empty($filters['group_id']) || !$groupIds->contains($filters['group_id'])) {
-            abort(403);
-        }
-
-        $meetingQuery = Meeting::where('group_id', $filters['group_id'])
-            ->with(['contributions', 'totals', 'fines', 'loans', 'loanPayments', 'attendances'])
-            ->orderBy('meeting_date');
-        if (!empty($filters['year'])) $meetingQuery->whereYear('meeting_date', $filters['year']);
-        $meetings = $meetingQuery->get();
-
-        $periods = [];
-        foreach ($meetings as $meeting) {
-            $key = $meeting->meeting_date->format('Y-m');
-            if (!isset($periods[$key])) {
-                $periods[$key] = [
-                    'label'           => $meeting->meeting_date->translatedFormat('M Y'),
-                    'savings'         => 0,
-                    'fines'           => 0,
-                    'loans_out'       => 0,
-                    'loan_payments'   => 0,
-                    'attended'        => 0,
-                    'total_attend'    => 0,
-                ];
-            }
-            $periods[$key]['savings']       += $meeting->contributions->sum('savings') + ($meeting->totals?->savings ?? 0);
-            $periods[$key]['fines']         += $meeting->fines->where('status', 'paid')->sum('amount') + ($meeting->totals?->fine ?? 0);
-            $periods[$key]['loans_out']     += $meeting->loans->sum('amount');
-            $periods[$key]['loan_payments'] += $meeting->loanPayments->sum('amount_paid');
-            $periods[$key]['attended']      += $meeting->attendances->whereIn('status', ['present', 'late'])->count();
-            $periods[$key]['total_attend']  += $meeting->attendances->count();
-        }
-
-        $previousSavings = null;
-        foreach ($periods as &$row) {
-            $row['attendance_rate'] = $row['total_attend'] > 0 ? round(($row['attended'] / $row['total_attend']) * 100, 1) : 0;
-            $row['savings_delta']   = $previousSavings !== null && $previousSavings > 0
-                ? round((($row['savings'] - $previousSavings) / $previousSavings) * 100, 1)
-                : null;
-            $previousSavings = $row['savings'];
-        }
-
-        return ['periods' => array_values($periods), 'filters' => $filters];
+        return $this->comparativeReportService->comparativePeriods($filters, $groupIds);
     }
 }
