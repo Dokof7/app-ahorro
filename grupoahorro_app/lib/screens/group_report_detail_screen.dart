@@ -21,13 +21,29 @@ class _GroupReportDetailScreenState extends State<GroupReportDetailScreen>
     with SingleTickerProviderStateMixin {
   final _service = ReportsService();
 
-  GroupReportSummary? _summary;
+  GroupReportGroup? _group;
   bool _loading = true;
   String? _error;
   int? _selectedYear;
   bool _showAllSessions = false;
 
   static const int _visibleSessionCount = 6;
+
+  // Section keys — they double as the backend's `sections` query tokens.
+  static const _kMonthly = 'monthly';
+  static const _kSessions = 'sessions';
+  static const _kTopSavers = 'top_savers';
+  static const _kTopAttendance = 'top_attendance';
+
+  // null = not fetched yet; non-null (possibly empty) = loaded.
+  List<GroupMonthlyPoint>? _monthly;
+  List<GroupSessionRow>? _sessions;
+  List<GroupTopSaver>? _topSavers;
+  List<GroupTopAttendance>? _topAttendance;
+
+  final Set<String> _expanded = {};
+  final Set<String> _sectionLoading = {};
+  final Map<String, String> _sectionError = {};
 
   late final List<int> _years = List.generate(5, (i) => DateTime.now().year - i);
 
@@ -44,7 +60,7 @@ class _GroupReportDetailScreenState extends State<GroupReportDetailScreen>
   void initState() {
     super.initState();
     _selectedYear = DateTime.now().year;
-    _load();
+    _loadBase();
   }
 
   @override
@@ -53,23 +69,136 @@ class _GroupReportDetailScreenState extends State<GroupReportDetailScreen>
     super.dispose();
   }
 
-  Future<void> _load() async {
+  /// Fetches only the group base info (name + registration_mode).
+  /// Sections load lazily on first expand.
+  Future<void> _loadBase() async {
     setState(() {
       _loading = true;
       _error = null;
-      _showAllSessions = false;
     });
     try {
-      final summary = await _service.fetchGroupSummary(widget.groupId, year: _selectedYear);
+      final summary = await _service.fetchGroupSummary(
+        widget.groupId,
+        year: _selectedYear,
+        sections: const [],
+      );
       if (!mounted) return;
-      setState(() => _summary = summary);
-      _animCtrl.forward(from: 0);
+      setState(() => _group = summary.group);
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = 'No se pudo cargar el resumen del grupo.\nRevisá tu conexión.');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  bool _isSectionLoaded(String key) => switch (key) {
+        _kMonthly => _monthly != null,
+        _kSessions => _sessions != null,
+        _kTopSavers => _topSavers != null,
+        _kTopAttendance => _topAttendance != null,
+        _ => false,
+      };
+
+  /// Both "top" sections share one fetch: expanding either loads both, so the
+  /// second expand is instant. Partial groups only ever need top_attendance.
+  List<String> _sectionTokensFor(String key) {
+    if (key == _kTopSavers || key == _kTopAttendance) {
+      final isPartial = _group?.isPartial ?? false;
+      return isPartial ? const [_kTopAttendance] : const [_kTopSavers, _kTopAttendance];
+    }
+    return [key];
+  }
+
+  Future<void> _loadSection(String key) async {
+    if (_isSectionLoaded(key) || _sectionLoading.contains(key)) return;
+    final tokens = _sectionTokensFor(key);
+    setState(() {
+      for (final t in tokens) {
+        _sectionLoading.add(t);
+        _sectionError.remove(t);
+      }
+    });
+    try {
+      final summary = await _service.fetchGroupSummary(
+        widget.groupId,
+        year: _selectedYear,
+        sections: tokens,
+      );
+      if (!mounted) return;
+      setState(() {
+        for (final t in tokens) {
+          switch (t) {
+            case _kMonthly:
+              _monthly = summary.monthly;
+            case _kSessions:
+              _sessions = summary.sessions;
+              _showAllSessions = false;
+            case _kTopSavers:
+              _topSavers = summary.topSavers;
+            case _kTopAttendance:
+              _topAttendance = summary.topAttendance;
+          }
+        }
+      });
+      _animCtrl.forward(from: 0);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        for (final t in tokens) {
+          _sectionError[t] = 'No se pudo cargar esta sección.';
+        }
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          for (final t in tokens) {
+            _sectionLoading.remove(t);
+          }
+        });
+      }
+    }
+  }
+
+  void _toggleSection(String key) {
+    final willExpand = !_expanded.contains(key);
+    setState(() {
+      if (willExpand) {
+        _expanded.add(key);
+      } else {
+        _expanded.remove(key);
+      }
+    });
+    if (willExpand) _loadSection(key);
+  }
+
+  /// Year change invalidates every cached section, then re-fetches only what
+  /// is currently expanded. Collapsed sections re-fetch on their next expand.
+  void _onYearChanged(int year) {
+    setState(() {
+      _selectedYear = year;
+      _monthly = null;
+      _sessions = null;
+      _topSavers = null;
+      _topAttendance = null;
+      _sectionError.clear();
+      _showAllSessions = false;
+    });
+    for (final key in _expanded) {
+      _loadSection(key);
+    }
+  }
+
+  Future<void> _refresh() async {
+    setState(() {
+      _monthly = null;
+      _sessions = null;
+      _topSavers = null;
+      _topAttendance = null;
+      _sectionError.clear();
+      _showAllSessions = false;
+    });
+    await Future.wait(_expanded.map(_loadSection).toList());
   }
 
   @override
@@ -108,7 +237,7 @@ class _GroupReportDetailScreenState extends State<GroupReportDetailScreen>
             ),
             const SizedBox(height: 24),
             FilledButton.icon(
-              onPressed: _load,
+              onPressed: _loadBase,
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF1B3A6B),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -123,76 +252,183 @@ class _GroupReportDetailScreenState extends State<GroupReportDetailScreen>
   }
 
   Widget _buildContent() {
-    final s = _summary!;
-    final isPartial = s.group.isPartial;
-    final hasMonthly = s.monthly.isNotEmpty;
-    final hasTopSavers = !isPartial && s.topSavers.isNotEmpty;
-    final hasTopAttendance = s.topAttendance.isNotEmpty;
-    final hasSessions = s.sessions.isNotEmpty;
-
-    if (!hasMonthly && !hasTopSavers && !hasTopAttendance && !hasSessions) {
-      return RefreshIndicator(
-        onRefresh: _load,
-        color: const Color(0xFF1B3A6B),
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _buildYearFilter(),
-            const SizedBox(height: 80),
-            Center(
-              child: Column(
-                children: [
-                  Icon(Icons.bar_chart_rounded, size: 48, color: Colors.grey.shade300),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Sin datos para este período',
-                    style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-    }
+    final isPartial = _group?.isPartial ?? false;
 
     return RefreshIndicator(
-      onRefresh: _load,
+      onRefresh: _refresh,
       color: const Color(0xFF1B3A6B),
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           _buildYearFilter(),
           const SizedBox(height: 16),
-          if (hasMonthly) ...[
-            _buildSectionHeader('Evolución de ahorros', Icons.trending_up_rounded),
-            const SizedBox(height: 12),
-            _buildSavingsLineChart(s.monthly),
-            const SizedBox(height: 24),
-            _buildSectionHeader('Asistencia mensual', Icons.event_available_rounded),
-            const SizedBox(height: 12),
-            _buildAttendanceBarChart(s.monthly),
-            const SizedBox(height: 24),
-          ],
-          if (isPartial) ...[
-            _buildPartialModeNote(),
-            const SizedBox(height: 24),
-          ] else if (hasTopSavers) ...[
-            _buildSectionHeader('Top aportadores', Icons.emoji_events_rounded),
-            const SizedBox(height: 12),
-            _buildTopSaversCard(s.topSavers),
-            const SizedBox(height: 24),
-          ],
-          if (hasTopAttendance) ...[
-            _buildSectionHeader('Mejor asistencia', Icons.verified_rounded),
-            const SizedBox(height: 12),
-            _buildTopAttendanceCard(s.topAttendance),
-            const SizedBox(height: 24),
-          ],
-          _buildSectionHeader('Detalle por sesión', Icons.receipt_long_rounded),
+          _buildCollapsibleSection(
+            sectionKey: _kMonthly,
+            title: 'Evolución mensual',
+            icon: Icons.trending_up_rounded,
+            contentBuilder: _buildMonthlyContent,
+          ),
           const SizedBox(height: 12),
-          _buildSessionsSection(s.sessions),
+          _buildCollapsibleSection(
+            sectionKey: _kSessions,
+            title: 'Detalle por sesión',
+            icon: Icons.receipt_long_rounded,
+            contentBuilder: _buildSessionsContent,
+          ),
+          const SizedBox(height: 12),
+          if (isPartial)
+            _buildPartialModeNote()
+          else
+            _buildCollapsibleSection(
+              sectionKey: _kTopSavers,
+              title: 'Top aportadores',
+              icon: Icons.emoji_events_rounded,
+              contentBuilder: _buildTopSaversContent,
+            ),
+          const SizedBox(height: 12),
+          _buildCollapsibleSection(
+            sectionKey: _kTopAttendance,
+            title: 'Mejor asistencia',
+            icon: Icons.verified_rounded,
+            contentBuilder: _buildTopAttendanceContent,
+          ),
+          const SizedBox(height: 24),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCollapsibleSection({
+    required String sectionKey,
+    required String title,
+    required IconData icon,
+    required Widget Function() contentBuilder,
+  }) {
+    final expanded = _expanded.contains(sectionKey);
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 12, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => _toggleSection(sectionKey),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  Icon(icon, size: 16, color: const Color(0xFF1B3A6B)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1B3A6B),
+                      ),
+                    ),
+                  ),
+                  AnimatedRotation(
+                    turns: expanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(Icons.keyboard_arrow_down_rounded, color: Colors.grey.shade500),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (expanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: _buildSectionBody(sectionKey, contentBuilder),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionBody(String key, Widget Function() contentBuilder) {
+    if (_sectionLoading.contains(key)) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2.5, color: Color(0xFF1B3A6B)),
+          ),
+        ),
+      );
+    }
+    final error = _sectionError[key];
+    if (error != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Column(
+          children: [
+            Text(
+              error,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+            ),
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: () => _loadSection(key),
+              style: TextButton.styleFrom(foregroundColor: const Color(0xFF1B3A6B)),
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text(
+                'Reintentar',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    if (!_isSectionLoaded(key)) return const SizedBox.shrink();
+    return contentBuilder();
+  }
+
+  Widget _buildMonthlyContent() {
+    final monthly = _monthly!;
+    if (monthly.isEmpty) return _quietEmpty('Sin datos para este período');
+    return Column(
+      children: [
+        _buildSavingsLineChart(monthly),
+        const SizedBox(height: 16),
+        _buildAttendanceBarChart(monthly),
+      ],
+    );
+  }
+
+  Widget _buildSessionsContent() => _buildSessionsSection(_sessions!);
+
+  Widget _buildTopSaversContent() {
+    final list = _topSavers!;
+    if (list.isEmpty) return _quietEmpty('Sin datos de aportes');
+    return _buildTopSaversCard(list);
+  }
+
+  Widget _buildTopAttendanceContent() {
+    final list = _topAttendance!;
+    if (list.isEmpty) return _quietEmpty('Sin datos de asistencia');
+    return _buildTopAttendanceCard(list);
+  }
+
+  Widget _quietEmpty(String message) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Center(
+        child: Text(
+          message,
+          style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+        ),
       ),
     );
   }
@@ -362,27 +598,9 @@ class _GroupReportDetailScreenState extends State<GroupReportDetailScreen>
                   .toList(),
               onChanged: (y) {
                 if (y == null) return;
-                setState(() => _selectedYear = y);
-                _load();
+                _onYearChanged(y);
               },
             ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSectionHeader(String title, IconData icon) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: const Color(0xFF1B3A6B)),
-        const SizedBox(width: 6),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF1B3A6B),
           ),
         ),
       ],
@@ -587,6 +805,7 @@ class _GroupReportDetailScreenState extends State<GroupReportDetailScreen>
           ),
         ),
       ),
+      legend: _legend(const Color(0xFF1B3A6B), 'Asistencia mensual'),
     );
   }
 

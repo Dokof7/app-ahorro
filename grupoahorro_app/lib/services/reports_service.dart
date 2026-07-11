@@ -21,10 +21,27 @@ class ReportsService {
         .toList();
   }
 
-  Future<GroupReportSummary> fetchGroupSummary(int groupId, {int? year}) async {
+  /// [sections] limits the response to the given section tokens
+  /// (monthly, sessions, top_savers, top_attendance).
+  ///
+  /// - null: the param is omitted and the backend returns every section.
+  /// - empty list: base-only call. The service sends the literal
+  ///   `sections=none`; 'none' is not a known token, so the backend
+  ///   whitelist-filters it to an empty selection and returns just the
+  ///   "group" object.
+  /// - non-empty list: sends `sections=a,b` and only those keys come back.
+  Future<GroupReportSummary> fetchGroupSummary(
+    int groupId, {
+    int? year,
+    List<String>? sections,
+  }) async {
     final res = await _client.dio.get(
       '/reports/groups/$groupId/summary',
-      queryParameters: {'year': year},
+      queryParameters: {
+        'year': year,
+        if (sections != null)
+          'sections': sections.isEmpty ? 'none' : sections.join(','),
+      },
     );
     final data = res.data as Map<String, dynamic>;
     return GroupReportSummary.fromJson((data['data'] as Map).cast<String, dynamic>());
