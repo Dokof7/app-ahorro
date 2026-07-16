@@ -16,4 +16,10 @@ class LoanPolicy
     {
         return $user->isAdmin();
     }
+
+    public function createPayment(User $user, Loan $loan): bool
+    {
+        return $user->isAdmin()
+            || ($user->canEdit() && $user->groups()->where('groups.id', $loan->group_id)->exists());
+    }
 }
