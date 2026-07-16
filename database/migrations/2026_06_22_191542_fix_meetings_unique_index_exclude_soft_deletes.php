@@ -9,6 +9,17 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // sqlite (used by the test suite) doesn't have MySQL's FK-vs-unique-index
+        // coupling, so it can drop/add the unique index directly without the
+        // FK-drop/restore dance MySQL requires. End schema state is identical:
+        // unique(group_id, meeting_number, deleted_at) replaces
+        // unique(group_id, meeting_number).
+        if (DB::getDriverName() !== 'mysql') {
+            Schema::table('meetings', fn($t) => $t->dropUnique(['group_id', 'meeting_number']));
+            Schema::table('meetings', fn($t) => $t->unique(['group_id', 'meeting_number', 'deleted_at'], 'meetings_group_meeting_active_unique'));
+            return;
+        }
+
         // The unique index (group_id, meeting_number) is the backing index for
         // meetings_group_id_foreign (meetings.group_id → groups.id).
         // MySQL refuses to drop the unique while that FK exists, so we drop it first.
@@ -48,6 +59,12 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            Schema::table('meetings', fn($t) => $t->dropUnique('meetings_group_meeting_active_unique'));
+            Schema::table('meetings', fn($t) => $t->unique(['group_id', 'meeting_number']));
+            return;
+        }
+
         DB::statement('ALTER TABLE meetings DROP INDEX meetings_group_meeting_active_unique');
 
         Schema::table('meetings', fn($t) => $t->unique(['group_id', 'meeting_number']));

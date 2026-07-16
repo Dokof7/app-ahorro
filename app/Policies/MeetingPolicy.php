@@ -14,7 +14,8 @@ class MeetingPolicy
 
     public function update(User $user, Meeting $meeting): bool
     {
-        return $user->isAdmin() || $user->groups()->where('groups.id', $meeting->group_id)->exists();
+        return $user->isAdmin()
+            || ($user->canEdit() && $user->groups()->where('groups.id', $meeting->group_id)->exists());
     }
 
     public function delete(User $user, Meeting $meeting): bool
