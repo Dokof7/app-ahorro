@@ -16,7 +16,7 @@ class LoanPaymentApiController extends Controller
 
     public function store(Request $request, Loan $loan)
     {
-        $this->authorize('createPayment', $loan);
+        $this->denyUnlessRole($request->user()->can('createPayment', $loan));
 
         $data = $request->validate([
             'meeting_id' => 'nullable|exists:meetings,id',

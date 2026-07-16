@@ -93,6 +93,7 @@ class AuthorizationHardeningTest extends TestCase
         ]);
 
         $response->assertStatus(403);
+        $response->assertJson(['reason' => 'role']);
         $this->assertDatabaseCount('loan_payments', 0);
     }
 
@@ -108,6 +109,7 @@ class AuthorizationHardeningTest extends TestCase
         ]);
 
         $response->assertStatus(403);
+        $response->assertJson(['reason' => 'role']);
         $this->assertDatabaseCount('activities', 0);
     }
 

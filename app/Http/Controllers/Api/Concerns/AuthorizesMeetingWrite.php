@@ -45,6 +45,19 @@ trait AuthorizesMeetingWrite
         }
     }
 
+    /**
+     * Abort with the unified role-denied JSON 403 unless $allowed is true.
+     * Use in controllers that authorize outside the meeting `update` policy
+     * (loan payments, activities, open-meeting lookup) so every mobile write
+     * endpoint returns the same `{error, reason:'role'}` shape.
+     */
+    protected function denyUnlessRole(bool $allowed): void
+    {
+        if (!$allowed) {
+            throw new HttpResponseException($this->roleDeniedResponse());
+        }
+    }
+
     protected function roleDeniedResponse(): JsonResponse
     {
         return response()->json([

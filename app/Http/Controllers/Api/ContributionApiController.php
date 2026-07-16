@@ -21,7 +21,7 @@ class ContributionApiController extends Controller
 
         if ($isPartial) {
             $data = $request->validate([
-                'shares' => 'required|integer|min:0',
+                'shares' => 'required|integer|min:0|max:25',
                 'emergency_fund' => 'nullable|numeric|min:0',
                 'fine' => 'nullable|numeric|min:0',
                 'observations' => 'nullable|string',

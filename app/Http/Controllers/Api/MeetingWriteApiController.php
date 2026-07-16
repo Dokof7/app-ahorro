@@ -2,13 +2,15 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Api\Concerns\AuthorizesMeetingWrite;
 use App\Http\Controllers\Controller;
 use App\Models\Group;
-use App\Models\Meeting;
 use Illuminate\Http\Request;
 
 class MeetingWriteApiController extends Controller
 {
+    use AuthorizesMeetingWrite;
+
     /**
      * Return the open meeting for the given group, pre-seeded with its
      * contribution/attendance rows, so mobile clients can populate write
@@ -23,9 +25,8 @@ class MeetingWriteApiController extends Controller
         $group = Group::findOrFail($data['group_id']);
         $user = $request->user();
 
-        abort_unless(
-            $user->isAdmin() || $user->groups()->where('groups.id', $group->id)->exists(),
-            403
+        $this->denyUnlessRole(
+            $user->isAdmin() || $user->groups()->where('groups.id', $group->id)->exists()
         );
 
         $meeting = $group->meetings()
@@ -36,6 +37,7 @@ class MeetingWriteApiController extends Controller
         if (!$meeting) {
             return response()->json([
                 'meeting' => null,
+                'is_partial' => $group->isPartial(),
                 'contributions' => [],
                 'attendances' => [],
                 'totals' => null,
@@ -44,6 +46,7 @@ class MeetingWriteApiController extends Controller
 
         return response()->json([
             'meeting' => $meeting,
+            'is_partial' => $group->isPartial(),
             'contributions' => $meeting->contributions,
             'attendances' => $meeting->attendances,
             'totals' => $meeting->totals,

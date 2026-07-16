@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Api\Concerns\AuthorizesMeetingWrite;
 use App\Http\Controllers\Controller;
 use App\Models\Activity;
 use App\Models\Group;
@@ -9,6 +10,8 @@ use Illuminate\Http\Request;
 
 class ActivityApiController extends Controller
 {
+    use AuthorizesMeetingWrite;
+
     public function index(Request $request, Group $group)
     {
         $this->authorizeGroup($request, $group);
@@ -65,18 +68,16 @@ class ActivityApiController extends Controller
     private function authorizeGroup(Request $request, Group $group): void
     {
         $user = $request->user();
-        abort_unless(
-            $user->isAdmin() || $user->groups()->where('groups.id', $group->id)->exists(),
-            403
+        $this->denyUnlessRole(
+            $user->isAdmin() || $user->groups()->where('groups.id', $group->id)->exists()
         );
     }
 
     private function authorizeGroupWrite(Request $request, Group $group): void
     {
         $user = $request->user();
-        abort_unless(
-            $user->isAdmin() || ($user->canEdit() && $user->groups()->where('groups.id', $group->id)->exists()),
-            403
+        $this->denyUnlessRole(
+            $user->isAdmin() || ($user->canEdit() && $user->groups()->where('groups.id', $group->id)->exists())
         );
     }
 }

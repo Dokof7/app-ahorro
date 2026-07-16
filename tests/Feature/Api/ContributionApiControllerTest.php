@@ -84,6 +84,25 @@ class ContributionApiControllerTest extends TestCase
         $this->assertEquals(0, $c1->fresh()->shares);
     }
 
+    public function test_partial_group_shares_over_max_rejected_with_422(): void
+    {
+        $group = $this->makeGroup(['registration_mode' => 'partial']);
+        $meeting = $this->makeMeeting($group);
+        $user = $this->makeUserWithRole('tesorero', $group);
+
+        $response = $this->actingAs($user)->postJson("/api/meetings/{$meeting->id}/contributions/bulk", [
+            'shares' => 26,
+            'emergency_fund' => 0,
+            'fine' => 0,
+        ]);
+
+        $response->assertStatus(422);
+        $this->assertDatabaseMissing('meeting_totals', [
+            'meeting_id' => $meeting->id,
+            'shares' => 26,
+        ]);
+    }
+
     public function test_negative_amount_rejected_with_422(): void
     {
         $group = $this->makeGroup(['registration_mode' => 'partial']);
