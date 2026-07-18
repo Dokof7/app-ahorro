@@ -151,6 +151,9 @@ void main() {
 
       expect(adapter.lastRequest?.path, '/meetings/9/close');
       expect(adapter.lastRequest?.method, 'POST');
+      // Body must be a non-empty JSON object: the shared host's ModSecurity
+      // rejects bodyless POSTs with a 406 before they reach Laravel.
+      expect(adapter.lastRequestBody, {});
     });
 
     test('propagates a 403 DioException when the meeting is already closed', () async {

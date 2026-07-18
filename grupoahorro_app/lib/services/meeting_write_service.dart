@@ -69,7 +69,9 @@ class MeetingWriteService {
   /// its summary server-side. A 403 with reason `closed` (someone else
   /// already closed it) surfaces as a [DioException] for the caller.
   Future<void> closeMeeting(int meetingId) async {
-    await _client.dio.post('/meetings/$meetingId/close');
+    // Empty JSON body on purpose: the shared host's ModSecurity returns a
+    // 406 for bodyless POSTs before the request ever reaches Laravel.
+    await _client.dio.post('/meetings/$meetingId/close', data: {});
   }
 
   /// `PUT /meetings/{meeting}/attendance/bulk`.
