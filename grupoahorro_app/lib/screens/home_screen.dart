@@ -5,12 +5,14 @@ import '../models/dashboard_stats.dart';
 import '../models/last_meeting_summary.dart';
 import '../models/meeting_scheduled_date.dart';
 import '../providers/auth_provider.dart';
+import '../utils/group_picker.dart';
 import '../services/dashboard_service.dart';
 import '../services/meeting_service.dart';
 import 'savings_screen.dart';
 import 'charts_screen.dart';
 import 'calendar_screen.dart';
 import 'comparative_reports_screen.dart';
+import 'open_meeting_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -466,7 +468,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => CalendarScreen(groupId: _groups.isNotEmpty ? _groups.first.id : 0)),
+        MaterialPageRoute(builder: (_) => CalendarScreen(groupId: meeting.groupId)),
       ),
       child: Container(
         decoration: BoxDecoration(
@@ -1205,13 +1207,16 @@ class _HomeScreenState extends State<HomeScreen> {
           _drawerItem(
             icon: Icons.calendar_month_rounded,
             label: 'Calendario',
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => CalendarScreen(groupId: _groups.isNotEmpty ? _groups.first.id : 0)),
-              );
-            },
+            onTap: () => _openGroupScreen(
+              (groupId) => CalendarScreen(groupId: groupId),
+            ),
+          ),
+          _drawerItem(
+            icon: Icons.groups_rounded,
+            label: 'Reunión',
+            onTap: () => _openGroupScreen(
+              (groupId) => OpenMeetingScreen(groupId: groupId),
+            ),
           ),
           _drawerItem(
             icon: Icons.bar_chart_rounded,
@@ -1253,6 +1258,18 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 12),
         ],
       ),
+    );
+  }
+
+  /// Closes the drawer, resolves the target group (asking the user when
+  /// they belong to more than one), then opens the given screen for it.
+  Future<void> _openGroupScreen(Widget Function(int groupId) builder) async {
+    Navigator.pop(context);
+    final group = await pickGroup(context, _groups);
+    if (group == null || !mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => builder(group.id)),
     );
   }
 

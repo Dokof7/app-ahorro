@@ -34,6 +34,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Mobile write API (open meeting)
     Route::get('/meetings/open', [MeetingWriteApiController::class, 'open']);
+    Route::post('/groups/{group}/meetings', [MeetingWriteApiController::class, 'store']);
+    Route::post('/meetings/{meeting}/close', [MeetingWriteApiController::class, 'close']);
     Route::post('/meetings/{meeting}/contributions/bulk', [ContributionApiController::class, 'bulkStore']);
     Route::put('/meetings/{meeting}/attendance/bulk', [AttendanceApiController::class, 'bulkUpdate']);
     Route::post('/loans/{loan}/payments', [LoanPaymentApiController::class, 'store']);

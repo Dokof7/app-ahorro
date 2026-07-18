@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\OpenMeetingForGroup;
 use App\Models\Meeting;
 use App\Models\Group;
 use App\Models\Member;
 use App\Models\MeetingContribution;
 use App\Models\MeetingTotal;
 use App\Models\Attendance;
-use App\Models\MeetingScheduledDate;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\DataTables;
 
 class MeetingController extends Controller
@@ -63,7 +64,7 @@ class MeetingController extends Controller
         return view('meetings.create', compact('groups', 'selectedGroup'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, OpenMeetingForGroup $openMeetingForGroup)
     {
         $data = $request->validate([
             'group_id'     => 'required|exists:groups,id',
@@ -73,42 +74,21 @@ class MeetingController extends Controller
             'status'       => 'required|in:open,closed',
         ]);
 
-        $data['meeting_number'] = Meeting::where('group_id', $data['group_id'])->max('meeting_number') + 1;
+        $group = Group::findOrFail($data['group_id']);
 
-        $meeting = Meeting::create($data);
+        $meeting = DB::transaction(function () use ($group, $data, $openMeetingForGroup) {
+            // Row lock over the group's meetings serializes concurrent
+            // openers (web + mobile) — see design ADR-3.
+            $group->meetings()->lockForUpdate()->get();
 
-        // Mark the scheduled date as used if it matches
-        MeetingScheduledDate::where('group_id', $data['group_id'])
-            ->where('scheduled_date', $data['meeting_date'])
-            ->update(['used' => true]);
-
-        $members = Member::where('group_id', $data['group_id'])->where('status', 'active')->get();
-        $isPartial = $meeting->group->isPartial();
-
-        foreach ($members as $member) {
-            Attendance::create(['meeting_id' => $meeting->id, 'member_id' => $member->id]);
-            if (!$isPartial) {
-                MeetingContribution::create([
-                    'meeting_id'     => $meeting->id,
-                    'member_id'      => $member->id,
-                    'shares'         => 0,
-                    'emergency_fund' => 0,
-                    'fine'           => 0,
-                    'confirmed'      => false,
-                ]);
-            }
-        }
-
-        if ($isPartial) {
-            MeetingTotal::create([
-                'meeting_id'     => $meeting->id,
-                'shares'         => 0,
-                'emergency_fund' => 0,
-                'fine'           => 0,
-            ]);
-        }
-
-        $meeting->recalculateSummary();
+            return $openMeetingForGroup(
+                $group,
+                $data['meeting_date'],
+                $data['month'],
+                $data['observations'] ?? null,
+                $data['status']
+            );
+        });
 
         return redirect()->route('meetings.show', $meeting)
             ->with('success', 'Reunión creada exitosamente.');
