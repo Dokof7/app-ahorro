@@ -107,6 +107,28 @@ class MeetingWriteApiController extends Controller
     }
 
     /**
+     * Close the given meeting. Mirrors the web MeetingController::close():
+     * same policy gate (via assertCanWriteMeeting, which also rejects
+     * already-closed meetings with the unified 403 `closed` shape) and the
+     * same summary recalculation.
+     */
+    public function close(Request $request, Meeting $meeting)
+    {
+        $this->assertCanWriteMeeting($meeting);
+
+        $meeting->update(['status' => 'closed']);
+        $meeting->recalculateSummary();
+
+        return response()->json([
+            'meeting' => [
+                'id' => $meeting->id,
+                'meeting_number' => $meeting->meeting_number,
+                'status' => $meeting->status,
+            ],
+        ]);
+    }
+
+    /**
      * Shared response shape for a loaded/created meeting, reused by open()
      * and store() so both mobile entry points return byte-identical JSON
      * (design ADR-5) and the Flutter client can use one parser.
