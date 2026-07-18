@@ -197,6 +197,8 @@ class _OpenMeetingScreenState extends State<OpenMeetingScreen>
               animation: _tabController,
               builder: (_, _) => FloatingActionButton.extended(
                 backgroundColor: _kPrimary,
+                foregroundColor: Colors.white,
+                elevation: 4,
                 onPressed: _saving
                     ? null
                     : (_tabController.index == 0 ? _submitAttendance : _submitContributions),
@@ -207,7 +209,14 @@ class _OpenMeetingScreenState extends State<OpenMeetingScreen>
                         child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                       )
                     : const Icon(Icons.save_rounded),
-                label: Text(_saving ? 'Guardando…' : 'Guardar'),
+                label: Text(
+                  _saving ? 'Guardando…' : 'Guardar',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    letterSpacing: 0.3,
+                  ),
+                ),
               ),
             ),
     );

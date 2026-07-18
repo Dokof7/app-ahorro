@@ -106,6 +106,11 @@ void main() {
     expect(find.text('Asistencia'), findsOneWidget);
     expect(find.text('Aportes'), findsOneWidget);
     expect(find.text('Juana Pérez'), findsOneWidget);
+
+    // Save FAB must pin a white foreground: the M3 theme default
+    // (onPrimaryContainer) is dark-on-dark over the brand-blue background.
+    final fab = tester.widget<FloatingActionButton>(find.byType(FloatingActionButton));
+    expect(fab.foregroundColor, Colors.white);
   });
 
   testWidgets('contributions tab shows live totals that update while typing', (tester) async {
