@@ -415,6 +415,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 2),
                 Text(
                   label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 11,
                     color: color.withValues(alpha: 0.7),
@@ -1263,14 +1265,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Closes the drawer, resolves the target group (asking the user when
   /// they belong to more than one), then opens the given screen for it.
+  /// When the user comes back the dashboard reloads: screens reached from
+  /// here (meetings, calendar) can change the numbers shown on this screen.
   Future<void> _openGroupScreen(Widget Function(int groupId) builder) async {
     Navigator.pop(context);
     final group = await pickGroup(context, _groups);
     if (group == null || !mounted) return;
-    Navigator.push(
+    await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => builder(group.id)),
     );
+    if (mounted) _load();
   }
 
   Widget _drawerItem({
