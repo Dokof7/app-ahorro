@@ -11,6 +11,7 @@ import 'savings_screen.dart';
 import 'charts_screen.dart';
 import 'calendar_screen.dart';
 import 'comparative_reports_screen.dart';
+import 'open_meeting_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -1210,6 +1211,17 @@ class _HomeScreenState extends State<HomeScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => CalendarScreen(groupId: _groups.isNotEmpty ? _groups.first.id : 0)),
+              );
+            },
+          ),
+          _drawerItem(
+            icon: Icons.groups_rounded,
+            label: 'Reunión',
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => OpenMeetingScreen(groupId: _groups.isNotEmpty ? _groups.first.id : 0)),
               );
             },
           ),
