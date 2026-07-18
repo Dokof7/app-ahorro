@@ -138,4 +138,34 @@ void main() {
       );
     });
   });
+
+  group('MeetingWriteService.closeMeeting', () {
+    test('posts to /meetings/{id}/close', () async {
+      final adapter = _StubAdapter(statusCode: 200, body: {
+        'meeting': {'id': 9, 'meeting_number': 2, 'status': 'closed'},
+      });
+      ApiClient.instance.dio.httpClientAdapter = adapter;
+
+      final service = MeetingWriteService();
+      await service.closeMeeting(9);
+
+      expect(adapter.lastRequest?.path, '/meetings/9/close');
+      expect(adapter.lastRequest?.method, 'POST');
+    });
+
+    test('propagates a 403 DioException when the meeting is already closed', () async {
+      final adapter = _StubAdapter(statusCode: 403, body: {
+        'error': 'Reunión cerrada, no se puede editar.',
+        'reason': 'closed',
+      });
+      ApiClient.instance.dio.httpClientAdapter = adapter;
+
+      final service = MeetingWriteService();
+
+      expect(
+        () => service.closeMeeting(9),
+        throwsA(isA<DioException>()),
+      );
+    });
+  });
 }

@@ -46,6 +46,11 @@ class _OpenMeetingScreenState extends State<OpenMeetingScreen>
   final Map<int, TextEditingController> _emergencyCtrls = {};
   final Map<int, TextEditingController> _fineCtrls = {};
 
+  // Semantic accents per contribution field, matching the attendance palette.
+  static const _sharesColor = Color(0xFF0D7C5F);
+  static const _emergencyColor = Color(0xFFE65100);
+  static const _fineColor = Color(0xFFD32F2F);
+
   // ---- Contributions tab state (partial: single group total) ----
   final _totalSharesCtrl = TextEditingController();
   final _totalEmergencyCtrl = TextEditingController();
@@ -158,6 +163,14 @@ class _OpenMeetingScreenState extends State<OpenMeetingScreen>
         backgroundColor: _kPrimary,
         foregroundColor: Colors.white,
         title: const Text('Reunión'),
+        actions: [
+          if (_meeting != null && !_loading && _error == null)
+            IconButton(
+              tooltip: 'Cerrar reunión',
+              icon: const Icon(Icons.lock_rounded),
+              onPressed: _saving ? null : _confirmCloseMeeting,
+            ),
+        ],
         bottom: _meeting != null
             ? TabBar(
                 controller: _tabController,
@@ -376,6 +389,60 @@ class _OpenMeetingScreenState extends State<OpenMeetingScreen>
     }
   }
 
+  /// Confirms and closes the open meeting. On success the screen reloads,
+  /// which lands on the create state so a new meeting can be opened.
+  Future<void> _confirmCloseMeeting() async {
+    final meeting = _meeting;
+    if (meeting == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('¿Cerrar la reunión?'),
+        content: const Text(
+          'Se calculará el resumen final y no se podrán registrar más datos en esta reunión.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: _fineColor),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _saving = true);
+    try {
+      await _service.closeMeeting(meeting.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Reunión cerrada.'), backgroundColor: Color(0xFF0D7C5F)),
+      );
+      await _load();
+    } on DioException catch (e) {
+      final apiError = ApiError.fromDioException(e);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(apiError.message), backgroundColor: Colors.red.shade600),
+      );
+      // Someone else may have closed it already — refresh to the real state.
+      if (apiError.reason == 'closed') await _load();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo cerrar la reunión.'), backgroundColor: Colors.red.shade600),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   // ------------------------------------------------------------------
   // LOADED state: header + tabs
   // ------------------------------------------------------------------
@@ -552,11 +619,96 @@ class _OpenMeetingScreenState extends State<OpenMeetingScreen>
     if (meeting.contributions.isEmpty) {
       return _emptyState('Sin miembros para registrar aportes.');
     }
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-      itemCount: meeting.contributions.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 10),
-      itemBuilder: (_, i) => _contributionCard(meeting.contributions[i]),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: _liveTotalsBar(),
+        ),
+        Expanded(
+          child: ListView.separated(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+            itemCount: meeting.contributions.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 10),
+            itemBuilder: (_, i) => _contributionCard(meeting.contributions[i]),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Sticky summary above the list: sums every member's fields as the user
+  /// types, so the treasurer can reconcile cash without adding by hand.
+  Widget _liveTotalsBar() {
+    final listenable = Listenable.merge([
+      ..._sharesCtrls.values,
+      ..._emergencyCtrls.values,
+      ..._fineCtrls.values,
+    ]);
+    return ListenableBuilder(
+      listenable: listenable,
+      builder: (_, _) {
+        final shares = _sharesCtrls.values
+            .fold<int>(0, (sum, c) => sum + (int.tryParse(c.text) ?? 0));
+        final emergency = _emergencyCtrls.values
+            .fold<double>(0, (sum, c) => sum + (double.tryParse(c.text) ?? 0));
+        final fine = _fineCtrls.values
+            .fold<double>(0, (sum, c) => sum + (double.tryParse(c.text) ?? 0));
+
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4)),
+            ],
+          ),
+          child: IntrinsicHeight(
+            child: Row(
+              children: [
+                _totalTile('totals-shares', Icons.savings_rounded, _sharesColor,
+                    'Acciones', shares.toString()),
+                VerticalDivider(width: 1, color: Colors.grey.shade200),
+                _totalTile('totals-emergency', Icons.health_and_safety_rounded,
+                    _emergencyColor, 'Emergencia', _fmtInput(emergency)),
+                VerticalDivider(width: 1, color: Colors.grey.shade200),
+                _totalTile('totals-fine', Icons.gavel_rounded, _fineColor,
+                    'Multas', _fmtInput(fine)),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _totalTile(
+      String key, IconData icon, Color color, String label, String value) {
+    return Expanded(
+      child: Column(
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            key: Key(key),
+            style: TextStyle(
+                fontSize: 17, fontWeight: FontWeight.w800, color: color),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
     );
   }
 
@@ -578,15 +730,47 @@ class _OpenMeetingScreenState extends State<OpenMeetingScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 10),
           Row(
             children: [
-              Expanded(child: _numberField(sharesCtrl, 'Acciones', digitsOnly: true)),
+              CircleAvatar(
+                radius: 16,
+                backgroundColor: _kPrimary.withValues(alpha: 0.12),
+                child: Text(
+                  name.isNotEmpty ? name[0].toUpperCase() : '?',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: _kPrimary,
+                  ),
+                ),
+              ),
               const SizedBox(width: 10),
-              Expanded(child: _numberField(emergencyCtrl, 'Emergencia')),
+              Expanded(
+                child: Text(
+                  name,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _numberField(sharesCtrl, 'Acciones',
+                    digitsOnly: true, icon: Icons.savings_rounded, accent: _sharesColor),
+              ),
               const SizedBox(width: 10),
-              Expanded(child: _numberField(fineCtrl, 'Multa')),
+              Expanded(
+                child: _numberField(emergencyCtrl, 'Emergencia',
+                    icon: Icons.health_and_safety_rounded, accent: _emergencyColor),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _numberField(fineCtrl, 'Multa',
+                    icon: Icons.gavel_rounded, accent: _fineColor),
+              ),
             ],
           ),
         ],
@@ -621,11 +805,20 @@ class _OpenMeetingScreenState extends State<OpenMeetingScreen>
             const SizedBox(height: 14),
             Row(
               children: [
-                Expanded(child: _numberField(_totalSharesCtrl, 'Acciones', digitsOnly: true)),
+                Expanded(
+                  child: _numberField(_totalSharesCtrl, 'Acciones',
+                      digitsOnly: true, icon: Icons.savings_rounded, accent: _sharesColor),
+                ),
                 const SizedBox(width: 10),
-                Expanded(child: _numberField(_totalEmergencyCtrl, 'Emergencia')),
+                Expanded(
+                  child: _numberField(_totalEmergencyCtrl, 'Emergencia',
+                      icon: Icons.health_and_safety_rounded, accent: _emergencyColor),
+                ),
                 const SizedBox(width: 10),
-                Expanded(child: _numberField(_totalFineCtrl, 'Multa')),
+                Expanded(
+                  child: _numberField(_totalFineCtrl, 'Multa',
+                      icon: Icons.gavel_rounded, accent: _fineColor),
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -647,7 +840,13 @@ class _OpenMeetingScreenState extends State<OpenMeetingScreen>
     );
   }
 
-  Widget _numberField(TextEditingController ctrl, String label, {bool digitsOnly = false}) {
+  Widget _numberField(
+    TextEditingController ctrl,
+    String label, {
+    bool digitsOnly = false,
+    IconData? icon,
+    Color? accent,
+  }) {
     return TextField(
       controller: ctrl,
       keyboardType: digitsOnly
@@ -656,13 +855,24 @@ class _OpenMeetingScreenState extends State<OpenMeetingScreen>
       inputFormatters: digitsOnly
           ? [FilteringTextInputFormatter.digitsOnly]
           : [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
-      style: const TextStyle(fontSize: 16),
+      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: TextStyle(
+          color: accent ?? Colors.grey.shade600,
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
+        ),
+        prefixIcon: icon == null ? null : Icon(icon, size: 18, color: accent),
+        prefixIconConstraints: const BoxConstraints(minWidth: 34),
         isDense: true,
         filled: true,
-        fillColor: const Color(0xFFF7F8FC),
+        fillColor: accent?.withValues(alpha: 0.06) ?? const Color(0xFFF7F8FC),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: accent ?? _kPrimary, width: 1.5),
+        ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       ),
     );

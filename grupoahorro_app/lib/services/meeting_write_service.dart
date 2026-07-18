@@ -65,6 +65,13 @@ class MeetingWriteService {
     );
   }
 
+  /// `POST /meetings/{meeting}/close` — closes the meeting and recalculates
+  /// its summary server-side. A 403 with reason `closed` (someone else
+  /// already closed it) surfaces as a [DioException] for the caller.
+  Future<void> closeMeeting(int meetingId) async {
+    await _client.dio.post('/meetings/$meetingId/close');
+  }
+
   /// `PUT /meetings/{meeting}/attendance/bulk`.
   Future<void> submitAttendance(
     int meetingId,
