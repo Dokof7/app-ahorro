@@ -9,6 +9,7 @@ use App\Models\Loan;
 use App\Models\Member;
 use App\Models\Meeting;
 use App\Models\MeetingContribution;
+use App\Models\MeetingTotal;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -31,13 +32,21 @@ class DashboardApiController extends Controller
             ->whereIn('id', $groupIds)
             ->get();
 
+        // Contribution money lives in two tables depending on the group's
+        // registration mode: per-member meeting_contributions (full) or a
+        // single meeting_totals row (partial) — mirror Meeting's accessors
+        // and sum both. A group only ever writes to one of them.
+        $sumBoth = fn(string $column) =>
+            (float) MeetingContribution::whereHas('meeting', fn($q) => $q->whereIn('group_id', $groupIds))->sum($column)
+            + (float) MeetingTotal::whereHas('meeting', fn($q) => $q->whereIn('group_id', $groupIds))->sum($column);
+
         $stats = [
             'total_groups'          => $groups->count(),
             'total_members'         => Member::whereIn('group_id', $groupIds)->count(),
             'total_meetings'        => Meeting::whereIn('group_id', $groupIds)->count(),
-            'total_savings'         => (float) MeetingContribution::whereHas('meeting', fn($q) => $q->whereIn('group_id', $groupIds))->sum('savings'),
-            'total_emergency'       => (float) MeetingContribution::whereHas('meeting', fn($q) => $q->whereIn('group_id', $groupIds))->sum('emergency_fund'),
-            'total_fines'           => (float) MeetingContribution::whereHas('meeting', fn($q) => $q->whereIn('group_id', $groupIds))->sum('fine'),
+            'total_savings'         => $sumBoth('savings'),
+            'total_emergency'       => $sumBoth('emergency_fund'),
+            'total_fines'           => $sumBoth('fine'),
             'loans_pending'         => (float) Loan::whereIn('group_id', $groupIds)->where('status', 'pending')->sum('balance'),
             'loans_paid'            => (float) Loan::whereIn('group_id', $groupIds)->where('status', 'paid')->sum('total_to_return'),
             'loans_overdue'         => Loan::whereIn('group_id', $groupIds)->where('status', 'overdue')->count(),
@@ -93,14 +102,20 @@ class DashboardApiController extends Controller
             [$year, $m] = explode('-', $month);
             $labels[] = Carbon::createFromDate($year, $m, 1)->format('M Y');
 
-            $base = MeetingContribution::whereHas('meeting', fn($q) =>
+            // Same dual-table rule as the stats: full groups write
+            // meeting_contributions, partial groups write meeting_totals.
+            $meetingFilter = fn($q) =>
                 $q->whereIn('group_id', $groupIds)
                   ->whereYear('meeting_date', $year)
-                  ->whereMonth('meeting_date', $m)
-            );
+                  ->whereMonth('meeting_date', $m);
 
-            $savings[]   = (float) (clone $base)->sum('savings');
-            $emergency[] = (float) (clone $base)->sum('emergency_fund');
+            $contribBase = MeetingContribution::whereHas('meeting', $meetingFilter);
+            $totalsBase  = MeetingTotal::whereHas('meeting', $meetingFilter);
+
+            $savings[]   = (float) (clone $contribBase)->sum('savings')
+                         + (float) (clone $totalsBase)->sum('savings');
+            $emergency[] = (float) (clone $contribBase)->sum('emergency_fund')
+                         + (float) (clone $totalsBase)->sum('emergency_fund');
         }
 
         return compact('labels', 'savings', 'emergency');
