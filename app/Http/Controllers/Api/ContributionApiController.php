@@ -20,8 +20,11 @@ class ContributionApiController extends Controller
         $isPartial = $meeting->group->isPartial();
 
         if ($isPartial) {
+            // No upper bound here: 25 shares is a PER-MEMBER cap (see the
+            // full branch below), but this single row holds the whole
+            // group's total. Matches the web MeetingTotalController.
             $data = $request->validate([
-                'shares' => 'required|integer|min:0|max:25',
+                'shares' => 'required|integer|min:0',
                 'emergency_fund' => 'nullable|numeric|min:0',
                 'fine' => 'nullable|numeric|min:0',
                 'observations' => 'nullable|string',

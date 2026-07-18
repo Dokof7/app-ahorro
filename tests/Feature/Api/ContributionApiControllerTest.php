@@ -84,22 +84,25 @@ class ContributionApiControllerTest extends TestCase
         $this->assertEquals(0, $c1->fresh()->shares);
     }
 
-    public function test_partial_group_shares_over_max_rejected_with_422(): void
+    public function test_partial_group_accepts_totals_above_the_per_member_cap(): void
     {
+        // The 25-share cap is per member. A partial group's single row is the
+        // whole group's total, so it must accept larger values (matches the
+        // web MeetingTotalController, which sets no upper bound).
         $group = $this->makeGroup(['registration_mode' => 'partial']);
         $meeting = $this->makeMeeting($group);
         $user = $this->makeUserWithRole('tesorero', $group);
 
         $response = $this->actingAs($user)->postJson("/api/meetings/{$meeting->id}/contributions/bulk", [
-            'shares' => 26,
+            'shares' => 150,
             'emergency_fund' => 0,
             'fine' => 0,
         ]);
 
-        $response->assertStatus(422);
-        $this->assertDatabaseMissing('meeting_totals', [
+        $response->assertSuccessful();
+        $this->assertDatabaseHas('meeting_totals', [
             'meeting_id' => $meeting->id,
-            'shares' => 26,
+            'shares' => 150,
         ]);
     }
 
