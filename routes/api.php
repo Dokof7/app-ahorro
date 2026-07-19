@@ -31,6 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/reports/groups/{group}/summary', [ReportApiController::class, 'groupSummary']);
     Route::get('/admin/groups', [AdminApiController::class, 'groups']);
     Route::get('/admin/groups/{group}/members', [AdminApiController::class, 'members']);
+    Route::get('/admin/groups/{group}/meetings', [AdminApiController::class, 'meetings']);
 
     // Mobile write API (open meeting)
     Route::get('/meetings/open', [MeetingWriteApiController::class, 'open']);

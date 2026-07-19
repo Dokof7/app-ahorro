@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Group;
+use App\Models\Meeting;
 use App\Models\Member;
 use Illuminate\Http\Request;
 
@@ -28,14 +29,58 @@ class AdminApiController extends Controller
             ->get();
 
         $data = $groups->map(fn($group) => [
-            'id'          => $group->id,
-            'name'        => $group->name,
-            'description' => $group->description ?? '',
-            'status'      => $group->status,
-            'share_value' => (float) $group->share_value,
-            'start_date'  => $group->start_date?->format('Y-m-d'),
-            'members'     => $group->members_count,
-            'meetings'    => $group->meetings_count,
+            'id'                => $group->id,
+            'name'              => $group->name,
+            'description'       => $group->description ?? '',
+            'status'            => $group->status,
+            'share_value'       => (float) $group->share_value,
+            'start_date'        => $group->start_date?->format('Y-m-d'),
+            'registration_mode' => $group->registration_mode ?? 'full',
+            'members'           => $group->members_count,
+            'meetings'          => $group->meetings_count,
+        ])->values();
+
+        return response()->json(['data' => $data]);
+    }
+
+    /**
+     * GET /api/admin/groups/{group}/meetings
+     * Per-meeting amounts and attendance for a group. Amounts go through the
+     * Meeting accessors, which fork on the group's registration mode
+     * (per-member contributions vs a single meeting_totals row), so partial
+     * groups report real money here even though it is not member-attributable.
+     */
+    public function meetings(Request $request, Group $group)
+    {
+        $user = $request->user();
+        if (!$user->isAdmin() && !$user->isAdminGrupo()) {
+            abort(403);
+        }
+
+        if (!$this->resolveGroupIds($user)->contains($group->id)) {
+            abort(403);
+        }
+
+        $meetings = Meeting::where('group_id', $group->id)
+            ->with(['contributions', 'totals'])
+            ->withCount([
+                'attendances as attended_count' => fn($q) => $q->whereIn('status', ['present', 'late']),
+                'attendances as total_attendance_count',
+            ])
+            ->orderByDesc('meeting_number')
+            ->get();
+
+        $data = $meetings->map(fn($meeting) => [
+            'id'               => $meeting->id,
+            'meeting_number'   => $meeting->meeting_number,
+            'meeting_date'     => $meeting->meeting_date->format('Y-m-d'),
+            'month'            => $meeting->month,
+            'status'           => $meeting->status,
+            'savings'          => (float) $meeting->total_savings,
+            'emergency'        => (float) $meeting->total_emergency,
+            'fines'            => (float) $meeting->total_fines,
+            'attended'         => $meeting->attended_count,
+            'total_attendance' => $meeting->total_attendance_count,
         ])->values();
 
         return response()->json(['data' => $data]);
