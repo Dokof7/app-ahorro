@@ -137,6 +137,37 @@ class AdminApiController extends Controller
         return response()->json(['data' => $data]);
     }
 
+    /**
+     * GET /api/admin/meetings/{meeting}/attendance
+     * Per-member attendance detail for one meeting, so admins can review
+     * who attended after the meeting is closed.
+     */
+    public function attendance(Request $request, Meeting $meeting)
+    {
+        $user = $request->user();
+        if (!$user->isAdmin() && !$user->isAdminGrupo()) {
+            abort(403);
+        }
+
+        if (!$this->resolveGroupIds($user)->contains($meeting->group_id)) {
+            abort(403);
+        }
+
+        $rows = $meeting->attendances()
+            ->with('member:id,full_name')
+            ->get()
+            ->sortBy(fn($a) => $a->member?->full_name ?? '')
+            ->values()
+            ->map(fn($a) => [
+                'member_id'    => $a->member_id,
+                'full_name'    => $a->member?->full_name ?? "Miembro #{$a->member_id}",
+                'status'       => $a->status,
+                'observations' => $a->observations,
+            ]);
+
+        return response()->json(['data' => $rows]);
+    }
+
     private function resolveGroupIds($user)
     {
         return $user->isAdmin() ? Group::pluck('id') : $user->groups()->pluck('groups.id');
