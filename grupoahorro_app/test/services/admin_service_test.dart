@@ -88,7 +88,7 @@ void main() {
           'start_date': null,
           'members': 0,
           'meetings': 0,
-          if (mode != null) 'registration_mode': mode,
+          'registration_mode': ?mode,
         };
 
     expect(AdminGroup.fromJson(json('partial')).isPartial, isTrue);
