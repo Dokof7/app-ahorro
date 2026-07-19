@@ -5,6 +5,7 @@ class AdminGroup {
   final String status;
   final double shareValue;
   final String? startDate;
+  final String registrationMode;
   final int members;
   final int meetings;
 
@@ -15,9 +16,12 @@ class AdminGroup {
     required this.status,
     required this.shareValue,
     required this.startDate,
+    required this.registrationMode,
     required this.members,
     required this.meetings,
   });
+
+  bool get isPartial => registrationMode == 'partial';
 
   factory AdminGroup.fromJson(Map<String, dynamic> json) {
     return AdminGroup(
@@ -27,6 +31,7 @@ class AdminGroup {
       status: json['status'] as String? ?? '',
       shareValue: _toDouble(json['share_value']),
       startDate: json['start_date'] as String?,
+      registrationMode: json['registration_mode'] as String? ?? 'full',
       members: _toInt(json['members']),
       meetings: _toInt(json['meetings']),
     );

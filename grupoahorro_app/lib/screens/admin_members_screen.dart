@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/admin_group.dart';
+import '../models/admin_meeting.dart';
 import '../services/admin_service.dart';
 
 class AdminMembersScreen extends StatefulWidget {
@@ -14,6 +15,7 @@ class AdminMembersScreen extends StatefulWidget {
 class _AdminMembersScreenState extends State<AdminMembersScreen> {
   final _service = AdminService();
   List<AdminMember> _members = [];
+  List<AdminMeeting> _meetings = [];
   bool _loading = true;
   String? _error;
 
@@ -26,12 +28,18 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
   Future<void> _load() async {
     setState(() { _loading = true; _error = null; });
     try {
-      final members = await _service.fetchMembers(widget.group.id);
+      final results = await Future.wait([
+        _service.fetchMembers(widget.group.id),
+        _service.fetchMeetings(widget.group.id),
+      ]);
       if (!mounted) return;
-      setState(() => _members = members);
+      setState(() {
+        _members = results[0] as List<AdminMember>;
+        _meetings = results[1] as List<AdminMeeting>;
+      });
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = 'No se pudieron cargar los miembros.\nRevisá tu conexión.');
+      setState(() => _error = 'No se pudieron cargar los datos del grupo.\nRevisá tu conexión.');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -48,9 +56,12 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final totalSavings = _members.fold(0.0, (s, m) => s + m.totalSavings);
-    final totalEmergency = _members.fold(0.0, (s, m) => s + m.totalEmergency);
-    final totalFines = _members.fold(0.0, (s, m) => s + m.totalFines);
+    // Group money comes from the meetings endpoint, which resolves amounts
+    // server-side for both registration modes. Summing member rows here
+    // would show zeros for partial groups (money is not member-attributable).
+    final totalSavings = _meetings.fold(0.0, (s, m) => s + m.savings);
+    final totalEmergency = _meetings.fold(0.0, (s, m) => s + m.emergency);
+    final totalFines = _meetings.fold(0.0, (s, m) => s + m.fines);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2F4F8),
@@ -69,6 +80,24 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                         padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
                         sliver: SliverToBoxAdapter(child: _buildGroupTotals(totalSavings, totalEmergency, totalFines)),
                       ),
+                      // Partial groups record money per meeting, not per
+                      // member — show the per-meeting breakdown here.
+                      if (widget.group.isPartial) ...[
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                          sliver: SliverToBoxAdapter(
+                              child: _sectionHeader('Reuniones', Icons.groups_rounded)),
+                        ),
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (_, i) => _MeetingCard(meeting: _meetings[i], fmt: _fmt),
+                              childCount: _meetings.length,
+                            ),
+                          ),
+                        ),
+                      ],
                       // Título lista
                       SliverPadding(
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -79,7 +108,11 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
                         sliver: SliverList(
                           delegate: SliverChildBuilderDelegate(
-                            (_, i) => _MemberCard(member: _members[i], fmt: _fmt),
+                            (_, i) => _MemberCard(
+                              member: _members[i],
+                              fmt: _fmt,
+                              showMoney: !widget.group.isPartial,
+                            ),
                             childCount: _members.length,
                           ),
                         ),
@@ -215,7 +248,11 @@ class _MemberCard extends StatefulWidget {
   final AdminMember member;
   final String Function(double) fmt;
 
-  const _MemberCard({required this.member, required this.fmt});
+  /// Partial groups record money per meeting, not per member — their member
+  /// cards hide the (always-zero) money sections and keep attendance.
+  final bool showMoney;
+
+  const _MemberCard({required this.member, required this.fmt, this.showMoney = true});
 
   @override
   State<_MemberCard> createState() => _MemberCardState();
@@ -336,19 +373,21 @@ class _MemberCardState extends State<_MemberCard> with SingleTickerProviderState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Fondos
-                    _sectionLabel('Fondos acumulados'),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        _amountChip('Ahorros', m.totalSavings, const Color(0xFF0D7C5F), Icons.savings_rounded),
-                        const SizedBox(width: 8),
-                        _amountChip('Emergencia', m.totalEmergency, const Color(0xFF1B3A6B), Icons.shield_rounded),
-                        const SizedBox(width: 8),
-                        _amountChip('Multas', m.totalFines, const Color(0xFFE65100), Icons.gavel_rounded),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
+                    // Fondos (hidden for partial groups: money is per meeting)
+                    if (widget.showMoney) ...[
+                      _sectionLabel('Fondos acumulados'),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          _amountChip('Ahorros', m.totalSavings, const Color(0xFF0D7C5F), Icons.savings_rounded),
+                          const SizedBox(width: 8),
+                          _amountChip('Emergencia', m.totalEmergency, const Color(0xFF1B3A6B), Icons.shield_rounded),
+                          const SizedBox(width: 8),
+                          _amountChip('Multas', m.totalFines, const Color(0xFFE65100), Icons.gavel_rounded),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                     // Asistencia
                     _sectionLabel('Asistencia a reuniones'),
                     const SizedBox(height: 8),
@@ -395,7 +434,8 @@ class _MemberCardState extends State<_MemberCard> with SingleTickerProviderState
                     // Info adicional
                     _sectionLabel('Información adicional'),
                     const SizedBox(height: 8),
-                    _infoRow(Icons.layers_rounded, '${m.totalShares} acciones acumuladas', Colors.grey.shade600),
+                    if (widget.showMoney)
+                      _infoRow(Icons.layers_rounded, '${m.totalShares} acciones acumuladas', Colors.grey.shade600),
                     if (m.phone != null) ...[
                       const SizedBox(height: 6),
                       _infoRow(Icons.phone_rounded, m.phone!, Colors.grey.shade600),
@@ -476,6 +516,110 @@ class _MemberCardState extends State<_MemberCard> with SingleTickerProviderState
         const SizedBox(width: 6),
         Text(text, style: TextStyle(fontSize: 12, color: color)),
       ],
+    );
+  }
+}
+
+/// One meeting row for partial groups: amounts and attendance per meeting,
+/// since money in these groups is recorded as a single per-meeting total.
+class _MeetingCard extends StatelessWidget {
+  final AdminMeeting meeting;
+  final String Function(double) fmt;
+
+  const _MeetingCard({required this.meeting, required this.fmt});
+
+  @override
+  Widget build(BuildContext context) {
+    final statusColor = meeting.isOpen ? const Color(0xFF0D7C5F) : Colors.grey.shade500;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Reunión N° ${meeting.meetingNumber} · ${meeting.meetingDate}',
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E)),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  meeting.isOpen ? 'Abierta' : 'Cerrada',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: statusColor),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              _miniAmount('Ahorros', meeting.savings, const Color(0xFF0D7C5F), Icons.savings_rounded),
+              const SizedBox(width: 8),
+              _miniAmount('Emergencia', meeting.emergency, const Color(0xFF1B3A6B), Icons.shield_rounded),
+              const SizedBox(width: 8),
+              _miniAmount('Multas', meeting.fines, const Color(0xFFE65100), Icons.gavel_rounded),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(Icons.how_to_reg_rounded, size: 14, color: Colors.grey.shade500),
+              const SizedBox(width: 4),
+              Text(
+                'Asistencia: ${meeting.attended}/${meeting.totalAttendance}',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _miniAmount(String label, double value, Color color, IconData icon) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(height: 4),
+            Text(
+              'Bs ${fmt(value)}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color),
+            ),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 10, color: color.withValues(alpha: 0.7)),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
