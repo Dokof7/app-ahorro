@@ -115,6 +115,40 @@ void main() {
     expect(find.text('Asistencia: 1/2'), findsOneWidget);
   });
 
+  testWidgets('tapping a meeting card expands its per-member attendance', (tester) async {
+    ApiClient.instance.dio.httpClientAdapter = _RoutingStubAdapter({
+      '/admin/groups/7/members': {
+        'data': [_memberJson],
+      },
+      '/admin/groups/7/meetings': {
+        'data': [_meetingJson],
+      },
+      '/admin/meetings/27/attendance': {
+        'data': [
+          {'member_id': 1, 'full_name': 'Ana Flores', 'status': 'present', 'observations': null},
+          {'member_id': 2, 'full_name': 'Beto Rojas', 'status': 'excused', 'observations': 'Viaje'},
+        ],
+      },
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(home: AdminMembersScreen(group: _group(mode: 'partial'))),
+    );
+    await tester.pumpAndSettle();
+
+    // Collapsed: no per-member rows yet.
+    expect(find.text('Ana Flores'), findsNothing);
+
+    await tester.tap(find.text('Reunión N° 5 · 2026-07-18'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ana Flores'), findsOneWidget);
+    expect(find.text('Asistió'), findsOneWidget);
+    expect(find.text('Beto Rojas'), findsOneWidget);
+    expect(find.text('Falta c/Permiso'), findsOneWidget);
+    expect(find.text('Viaje'), findsOneWidget);
+  });
+
   testWidgets('full group: no per-meeting section', (tester) async {
     stubEndpoints();
 

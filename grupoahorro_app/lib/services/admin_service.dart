@@ -3,6 +3,13 @@ import '../models/admin_meeting.dart';
 import 'api_client.dart';
 
 class AdminService {
+  Future<List<AdminAttendanceRow>> fetchMeetingAttendance(int meetingId) async {
+    final response = await ApiClient.instance.dio.get('/admin/meetings/$meetingId/attendance');
+    final data = response.data;
+    final List<dynamic> list = data is List ? data : (data['data'] ?? []);
+    return list.map((e) => AdminAttendanceRow.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
   Future<List<AdminMeeting>> fetchMeetings(int groupId) async {
     final response = await ApiClient.instance.dio.get('/admin/groups/$groupId/meetings');
     final data = response.data;

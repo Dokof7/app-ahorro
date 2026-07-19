@@ -78,6 +78,24 @@ void main() {
     expect(m.totalAttendance, 2);
   });
 
+  test('fetchMeetingAttendance hits the admin attendance endpoint and parses rows', () async {
+    final adapter = _StubAdapter(statusCode: 200, body: {
+      'data': [
+        {'member_id': 1, 'full_name': 'Ana Flores', 'status': 'present', 'observations': null},
+        {'member_id': 2, 'full_name': 'Beto Rojas', 'status': 'excused', 'observations': 'Viaje'},
+      ],
+    });
+    ApiClient.instance.dio.httpClientAdapter = adapter;
+
+    final rows = await AdminService().fetchMeetingAttendance(27);
+
+    expect(adapter.lastRequest?.path, '/admin/meetings/27/attendance');
+    expect(rows, hasLength(2));
+    expect(rows.first.fullName, 'Ana Flores');
+    expect(rows.first.status, 'present');
+    expect(rows.last.observations, 'Viaje');
+  });
+
   test('AdminGroup parses registration_mode and defaults to full', () {
     Map<String, dynamic> json(String? mode) => {
           'id': 1,

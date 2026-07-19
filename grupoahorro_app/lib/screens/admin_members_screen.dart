@@ -522,19 +522,56 @@ class _MemberCardState extends State<_MemberCard> with SingleTickerProviderState
 
 /// One meeting row for partial groups: amounts and attendance per meeting,
 /// since money in these groups is recorded as a single per-meeting total.
-class _MeetingCard extends StatelessWidget {
+class _MeetingCard extends StatefulWidget {
   final AdminMeeting meeting;
   final String Function(double) fmt;
 
   const _MeetingCard({required this.meeting, required this.fmt});
 
   @override
+  State<_MeetingCard> createState() => _MeetingCardState();
+}
+
+class _MeetingCardState extends State<_MeetingCard> {
+  bool _expanded = false;
+  bool _loadingAttendance = false;
+  List<AdminAttendanceRow>? _attendance;
+
+  static const _statusStyles = {
+    'present': ('Asistió', Color(0xFF0D7C5F), Icons.check_circle_rounded),
+    'late': ('Atraso', Color(0xFFE65100), Icons.watch_later_rounded),
+    'absent': ('Falta', Color(0xFFD32F2F), Icons.cancel_rounded),
+    'excused': ('Falta c/Permiso', Color(0xFF1565C0), Icons.info_rounded),
+  };
+
+  /// Lazy fetch: the attendance detail loads once, on first expand.
+  Future<void> _toggle() async {
+    setState(() => _expanded = !_expanded);
+    if (!_expanded || _attendance != null || _loadingAttendance) return;
+
+    setState(() => _loadingAttendance = true);
+    try {
+      final rows = await AdminService().fetchMeetingAttendance(widget.meeting.id);
+      if (!mounted) return;
+      setState(() => _attendance = rows);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo cargar la asistencia.'), backgroundColor: Colors.red.shade600),
+      );
+      setState(() => _expanded = false);
+    } finally {
+      if (mounted) setState(() => _loadingAttendance = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final meeting = widget.meeting;
     final statusColor = meeting.isOpen ? const Color(0xFF0D7C5F) : Colors.grey.shade500;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
@@ -542,51 +579,109 @@ class _MeetingCard extends StatelessWidget {
           BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: _toggle,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Reunión N° ${meeting.meetingNumber} · ${meeting.meetingDate}',
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E)),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      meeting.isOpen ? 'Abierta' : 'Cerrada',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: statusColor),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Icon(
+                    _expanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                    color: Colors.grey.shade400,
+                    size: 20,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  _miniAmount('Ahorros', meeting.savings, const Color(0xFF0D7C5F), Icons.savings_rounded),
+                  const SizedBox(width: 8),
+                  _miniAmount('Emergencia', meeting.emergency, const Color(0xFF1B3A6B), Icons.shield_rounded),
+                  const SizedBox(width: 8),
+                  _miniAmount('Multas', meeting.fines, const Color(0xFFE65100), Icons.gavel_rounded),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.how_to_reg_rounded, size: 14, color: Colors.grey.shade500),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Asistencia: ${meeting.attended}/${meeting.totalAttendance}',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
+              if (_expanded) ...[
+                const SizedBox(height: 10),
+                Divider(height: 1, color: Colors.grey.shade100),
+                const SizedBox(height: 10),
+                if (_loadingAttendance)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(8),
+                      child: SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF1B3A6B)),
+                      ),
+                    ),
+                  )
+                else if (_attendance != null)
+                  ..._attendance!.map(_attendanceRow),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _attendanceRow(AdminAttendanceRow row) {
+    final (label, color, icon) =
+        _statusStyles[row.status] ?? ('Sin registro', Colors.grey, Icons.help_outline_rounded);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Reunión N° ${meeting.meetingNumber} · ${meeting.meetingDate}',
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF1A1A2E)),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  meeting.isOpen ? 'Abierta' : 'Cerrada',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: statusColor),
-                ),
-              ),
-            ],
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(row.fullName,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E))),
+                if (row.observations != null && row.observations!.isNotEmpty)
+                  Text(row.observations!,
+                      style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+              ],
+            ),
           ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              _miniAmount('Ahorros', meeting.savings, const Color(0xFF0D7C5F), Icons.savings_rounded),
-              const SizedBox(width: 8),
-              _miniAmount('Emergencia', meeting.emergency, const Color(0xFF1B3A6B), Icons.shield_rounded),
-              const SizedBox(width: 8),
-              _miniAmount('Multas', meeting.fines, const Color(0xFFE65100), Icons.gavel_rounded),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(Icons.how_to_reg_rounded, size: 14, color: Colors.grey.shade500),
-              const SizedBox(width: 4),
-              Text(
-                'Asistencia: ${meeting.attended}/${meeting.totalAttendance}',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-              ),
-            ],
-          ),
+          Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color)),
         ],
       ),
     );
@@ -606,7 +701,7 @@ class _MeetingCard extends StatelessWidget {
             Icon(icon, size: 14, color: color),
             const SizedBox(height: 4),
             Text(
-              'Bs ${fmt(value)}',
+              'Bs ${widget.fmt(value)}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color),

@@ -55,3 +55,28 @@ class AdminMeeting {
     return double.tryParse(v.toString()) ?? 0;
   }
 }
+
+/// One member's attendance in a meeting, from
+/// GET /admin/meetings/{meeting}/attendance.
+class AdminAttendanceRow {
+  final int memberId;
+  final String fullName;
+  final String status;
+  final String? observations;
+
+  AdminAttendanceRow({
+    required this.memberId,
+    required this.fullName,
+    required this.status,
+    required this.observations,
+  });
+
+  factory AdminAttendanceRow.fromJson(Map<String, dynamic> json) {
+    return AdminAttendanceRow(
+      memberId: AdminMeeting._toInt(json['member_id']),
+      fullName: json['full_name'] as String? ?? '',
+      status: json['status'] as String? ?? '',
+      observations: json['observations'] as String?,
+    );
+  }
+}
